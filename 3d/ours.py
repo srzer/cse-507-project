@@ -152,8 +152,8 @@ def global_min_branch_and_bound(
         if max_side(box) <= min_box_size:
             # print("block small enough")
             f = f_value(x, y, z)
-            new_constraints = box_constraints
-            # new_constraints = And(box_constraints, constraint)
+            # new_constraints = box_constraints
+            new_constraints = And(box_constraints, constraint)
             sol_box = Minimize(f, new_constraints, delta_dreal)
             Ix = sol_box[x]
             Iy = sol_box[y]
