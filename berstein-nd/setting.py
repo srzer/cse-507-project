@@ -1,5 +1,11 @@
 from box_utils import BoxND
 from dreal import *
+# the input rational function is represented as two lists of terms
+# each term is [coefficient, [exponent_vector]]
+# for example
+# f(x,y) = (2x^2y + 3y^2) / (x^2 + y)
+# numerator_terms = [ [2, [2,1]], [3, [0,2]] ]
+# denominator_terms = [ [1, [2,0]], [1, [0,1]] ]
 def get_poly_terms(n):
     numerator_terms = []
     denominator_terms = []
