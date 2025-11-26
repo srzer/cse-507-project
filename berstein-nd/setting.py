@@ -1,0 +1,75 @@
+from box_utils import BoxND
+from dreal import *
+def get_poly_terms(n):
+    numerator_terms = []
+    denominator_terms = []
+
+    # ----- Denominator: sum_i xi^2 -----
+    for i in range(n):
+        exps = [0] * n
+        exps[i] = 2
+        denominator_terms.append([1.0, exps])
+
+    # ----- Numerator: sum_i (xi^2 -2xi + 1) -----
+    constant_term = 0.0
+    for i in range(n):
+        # xi^2 term
+        exps2 = [0] * n
+        exps2[i] = 2
+        numerator_terms.append([1.0, exps2])
+
+        # -2 xi term
+        exps1 = [0] * n
+        exps1[i] = 1
+        numerator_terms.append([2.0, exps1])
+
+        # +1 constant for each dimension, accumulated later
+        constant_term += 1.0
+
+    # Add constant term n
+    numerator_terms.append([constant_term, [0] * n])
+
+    return numerator_terms, denominator_terms
+
+def f_constraint(*xs):
+    """
+    Example constraint generalized to n dimensions:
+
+    The original 3D version had three ball constraints.
+    Here we mimic a similar structure by placing several
+    2-radius balls at fixed positions in n-D space.
+
+    You can customize this if your real constraint is different.
+    """
+
+    # Build three centers similar to the 3D case:
+    # (3,3,3,...), (4,4,4,...), (3,4,4,...)
+    n = len(xs)
+
+    center1 = [3] * n
+    center2 = [4] * n
+    center3 = [3] + [4] * (n - 1)
+
+    def sq_dist(xs, center):
+        return sum((x - c) ** 2 for x, c in zip(xs, center))
+
+    return And(
+        sq_dist(xs, center1) <= 2 * 2,
+        sq_dist(xs, center2) <= 2 * 2,
+        sq_dist(xs, center3) <= 2 * 2,
+    )
+
+
+def get_init_box(n: int):
+    """
+    Build an initial axis-aligned n-D box:
+
+        [1,10] × [1,10] × ... × [1,10]
+
+    Same as your original 3D version.
+    """
+    lows = [1.0] * n
+    highs = [10.0] * n
+    min_box_size = 0.1
+
+    return BoxND(lows, highs), min_box_size
