@@ -78,6 +78,7 @@ def global_min_branch_and_bound(
 
         berstein_min = bernstein_bounds_on_box(poly_num, poly_den, box)[0]
         if berstein_min >= B-eps:
+            print("it works!")
             continue
         # 1. Prune by checking if the box can still improve the global bound B:
         #    Is there any point in this box with constraint satisfied and f < B - eps?
