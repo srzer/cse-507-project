@@ -70,6 +70,5 @@ def get_init_box(n: int):
     """
     lows = [1.0] * n
     highs = [10.0] * n
-    min_box_size = 0.1
 
-    return BoxND(lows, highs), min_box_size
+    return BoxND(lows, highs)

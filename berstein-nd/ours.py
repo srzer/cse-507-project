@@ -98,7 +98,9 @@ def global_min_branch_and_bound(
 
         # 2. If the box is already small enough, do a local Minimize on this box
         if max_side(box) <= min_box_size:
+            continue
             # NOTE: 3 ways; 1) directly skip 2) minimize with only the box constraint 3) minimize with both box and global constraint
+            # NOTE: if we set min_box_size = delta_dreal, then we can directly skip.
             # # print("Box small enough, performing local minimize.")
             # local_constraints = box_constraints
             # # You can choose to also include the global constraint here:
@@ -200,11 +202,11 @@ def baseline_min_dreal(
 
 if __name__ == "__main__":
     # Dimension n: you can change this manually or parse from command line
-    n = 2
+    n = 3
 
     # get_init_box(n) should be defined in setting.py and return:
     #   BoxND(lows, highs), min_box_size
-    init_box, min_box_size = get_init_box(n)
+    init_box = get_init_box(n)
     poly_num_terms, poly_den_terms = get_poly_terms(n)
     poly_num = poly_from_terms(poly_num_terms)
     poly_den = poly_from_terms(poly_den_terms)
@@ -216,7 +218,7 @@ if __name__ == "__main__":
         poly_num=poly_num,
         poly_den=poly_den,
         delta_dreal=1e-3,       # δ for dReal
-        min_box_size=min_box_size,  # stop splitting when max side < min_box_size
+        min_box_size=1e-3,  # stop splitting when max side < min_box_size
         eps=1e-3                # pruning margin
     )
     t1 = time.time()
