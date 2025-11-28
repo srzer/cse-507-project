@@ -1,0 +1,11 @@
+services:
+  dreal:
+    build:
+      context: ./dreal-container
+    volumes:
+      - ./:${ROOT_DIR}/
+    working_dir: ${ROOT_DIR}
+    # usage for scripts:
+    # docker compose run --rm dreal file.py
+    # for shell:
+    # docker compose run --rm --entrypoint bash dreal

@@ -30,4 +30,38 @@ We also define a minimal box size, which is, by default, the as same as our erro
 
 - Python >=3.9
 - dReal >4.20
-    For dReal installation, please refer to https://github.com/dreal/dreal4.
+
+### Setup dReal
+
+(a) For local dReal installation, please refer to https://github.com/dreal/dreal4.
+
+(b) To use the provided dReal container,
+set the `ROOT_DIR` environment variable using `make`: [^1]
+```bash
+make .env
+```
+
+build the image with
+```bash
+docker compose build dreal
+```
+
+Run scripts with the containerized binary via
+```bash
+docker compose run --rm dreal main.py
+```
+
+Enter into the container shell with
+```bash
+docker compose run --rm --entrypoint bash dreal
+```
+
+This container includes:
+- Ubuntu 22.04 base
+- dReal (v4.21.06.2) binaries
+- Python 3 with dreal package
+
+[^1]: Alternatively, without `make`, `cd` into the project root directory and run
+```bash
+echo ROOT_DIR=$(pwd) > .env
+```
