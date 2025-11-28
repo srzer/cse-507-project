@@ -6,16 +6,23 @@ Optimizing positive rational functions $\R^n -> \R$ with polynomial constraints 
 
 - The input rational function is represented as two lists of terms, each term is [coefficient, [exponent_vector]].
 For example, $f(x,y) = (2x^2y + 3y^2) / (x^2 + y)$, then numerator_terms = [ [2, [2,1]], [3, [0,2]] ], and denominator_terms = [ [1, [2,0]], [1, [0,1]] ].
-- We have an initial box, which is assumed to cover all feasible areas and contain no pole.
-We also have a minimal box size, which is set default as same as $\delta$ in dReal (e.g. 1e-3) by now.
-- For each box, the pipeline is:
-    - We solve (Bernstein method) a rough lower bound on this box. If it's larger than current lower bound, skip.
-    - We then solve (dReal) a solution in the box satisfying the constraint and improving the lower bound at least by $\epsilon$, if unsat, skip; if sat, update the lower bound.
-    - If the box is already smaller than the minimal box size, skip.
-    - We then determine (dReal) whether the box is fully feasible. If so, we solve (dReal) the accurate lower bound with only box constraint; otherwise, we split the box (currently splitting the longest edge).
 
-To do:
-- Establish a better toolkit of splitting heuristics.
+- We start with an initial box that is assumed to cover all feasible areas and contain no poles.
+We also define a minimal box size, which is, by default, the as same as our error bound $\delta$ as used in dReal (e.g. 1e-3).
+
+- For each box, the pipeline is:
+
+    - Solve (Bernstein method) a rough lower bound on this box. If it's larger than current lower bound, skip.
+
+    - Solve (dReal) a solution in the box satisfying the constraints and improving the lower bound at least by $\epsilon$.
+    If unsat, then skip; If sat, then update the lower bound.
+    - If the box is already smaller than the minimal box size, skip.
+
+    - Check (dReal) if the box is fully feasible.
+    If so, we solve (dReal) the accurate lower bound with only box constraint; otherwise, we split the box (currently splitting the longest edge).
+
+## To Do
+- Establish a toolkit of smart (e.g. function-behavior-aware) splitting heuristics.
 - Replace expensive dReal solver calls through the Bernstein method.
 - Write more tests to demonstrate our method's advantage.
 
