@@ -61,7 +61,4 @@ This container includes:
 - dReal (v4.21.06.2) binaries
 - Python 3 with dreal package
 
-[^1]: Alternatively, without `make`, `cd` into the project root directory and run
-```bash
-echo ROOT_DIR=$(pwd) > .env
-```
+[^1]: Alternatively, without `make`, `cd` into the project root directory and run `echo ROOT_DIR=$(pwd) > .env`.
