@@ -15,16 +15,16 @@ class TestProblem:
     f_maker: Callable
     constraint_maker: Callable
     float_constraint: Callable
-    init_box: ours_test.Box3D
+    init_box: ours_test.Box3
     description: str
 
 
 # Numeric Baseline 1: SHGO
 def run_scipy_shgo(p: TestProblem):
     bounds = [
-        (p.init_box.xl, p.init_box.xu),
-        (p.init_box.yl, p.init_box.yu),
-        (p.init_box.zl, p.init_box.zu),
+        (p.init_box.lower[0], p.init_box.upper[0]),
+        (p.init_box.lower[1], p.init_box.upper[1]),
+        (p.init_box.lower[2], p.init_box.upper[2]),
     ]
 
     def obj(arr):
@@ -45,9 +45,9 @@ def run_scipy_shgo(p: TestProblem):
 # Numeric Baseline 2: Differential Evolution
 def run_scipy_diff_evo(p: TestProblem):
     bounds = [
-        (p.init_box.xl, p.init_box.xu),
-        (p.init_box.yl, p.init_box.yu),
-        (p.init_box.zl, p.init_box.zu),
+        (p.init_box.lower[0], p.init_box.upper[0]),
+        (p.init_box.lower[1], p.init_box.upper[1]),
+        (p.init_box.lower[2], p.init_box.upper[2]),
     ]
 
     def obj(arr):
@@ -73,9 +73,9 @@ def run_scipy_diff_evo(p: TestProblem):
 # Numeric Baseline 3: Dual Annealing
 def run_scipy_dual_annealing(p: TestProblem):
     bounds = [
-        (p.init_box.xl, p.init_box.xu),
-        (p.init_box.yl, p.init_box.yu),
-        (p.init_box.zl, p.init_box.zu),
+        (p.init_box.lower[0], p.init_box.upper[0]),
+        (p.init_box.lower[1], p.init_box.upper[1]),
+        (p.init_box.lower[2], p.init_box.upper[2]),
     ]
 
     def obj(arr):
@@ -173,7 +173,7 @@ def test_sanity_poly():
         lambda x, y, z: x**2 + y**2 + z**2,
         lambda x, y, z, A, O: A(x >= -2, x <= 2, y >= -2, y <= 2, z >= -2, z <= 2),
         lambda x, y, z: True,
-        ours_test.Box3D(-2, 2, -2, 2, -2, 2),
+        ours_test.Box3((-2, -2, -2), (2, 2, 2)),
         "Simple x^2",
     )
 
@@ -184,7 +184,7 @@ def test_sanity_rational():
         lambda x, y, z: (x + 1.0) / (y + 1.0),
         lambda x, y, z, A, O: A(x >= 0, x <= 1, y >= 0, y <= 1, z == 0),
         lambda x, y, z: 0 <= x <= 1 and 0 <= y <= 1,
-        ours_test.Box3D(0, 1, 0, 1, -1, 1),
+        ours_test.Box3((0, 0, -1), (1, 1, 1)),
         "Simple x/y",
     )
 
@@ -195,7 +195,7 @@ def test_rational_bowl():
         lambda x, y, z: (x**2 + y**2 + z**2) / (x + y + z),
         lambda x, y, z, A, O: A(x**2 + y**2 + z**2 <= 9),
         lambda x, y, z: x**2 + y**2 + z**2 <= 9,
-        ours_test.Box3D(0.1, 5, 0.1, 5, 0.1, 5),
+        ours_test.Box3((0.1, 0.1, 0.1), (5, 5, 5)),
         "Simple rational",
     )
 
@@ -211,7 +211,7 @@ def test_himmelblau_ratio():
         f,
         lambda x, y, z, A, O: A(x**2 + y**2 <= 50),
         lambda x, y, z: x**2 + y**2 <= 50,
-        ours_test.Box3D(-5, 5, -5, 5, -1, 1),
+        ours_test.Box3((-5, -5, -1), (5, 5, 1)),
         "Multimodal",
     )
 
@@ -228,7 +228,7 @@ def test_split_islands():
             (x - 2) ** 2 + y**2 + z**2 <= 0.25
             or (x + 2) ** 2 + y**2 + z**2 <= 0.25
         ),
-        ours_test.Box3D(-5, 5, -2, 2, -2, 2),
+        ours_test.Box3((-5, -2, -2), (5, 2, 2)),
         "Disconnected",
     )
 
@@ -239,7 +239,7 @@ def test_singularity_edge():
         lambda x, y, z: (1 / x) + (1 / y) + (1 / z),
         lambda x, y, z, A, O: x**2 + y**2 + z**2 >= 1,
         lambda x, y, z: x**2 + y**2 + z**2 >= 1,
-        ours_test.Box3D(0.1, 3, 0.1, 3, 0.1, 3),
+        ours_test.Box3((0.1, 0.1, 0.1), (3, 3, 3)),
         "Non-convex hole",
     )
 
@@ -250,7 +250,7 @@ def test_pole_avoidance():
         lambda x, y, z: 1 / (x + y + z - 2.5),
         lambda x, y, z, A, O: A(x >= 1, y >= 1, z >= 1),
         lambda x, y, z: x >= 1 and y >= 1 and z >= 1,
-        ours_test.Box3D(1, 2, 1, 2, 1, 2),
+        ours_test.Box3((1, 1, 1), (2, 2, 2)),
         "Singularity",
     )
 
@@ -261,7 +261,7 @@ def test_rational_valley():
         lambda x, y, z: (x**2 + y**2 + z**2 + 1) / (x * y * z + 1),
         lambda x, y, z, A, O: A(x <= 2, y <= 2, z <= 2),
         lambda x, y, z: x <= 2 and y <= 2 and z <= 2,
-        ours_test.Box3D(0.1, 2, 0.1, 2, 0.1, 2),
+        ours_test.Box3((0.1, 0.1, 0.1), (2, 2, 2)),
         "Valley",
     )
 
@@ -278,7 +278,7 @@ def test_positive_islands():
             (x - 2) ** 2 + y**2 + z**2 <= 0.25
             or (x + 2) ** 2 + y**2 + z**2 <= 0.25
         ),
-        ours_test.Box3D(-5, 5, -5, 5, -5, 5),
+        ours_test.Box3((-5, -5, -5), (5, 5, 5)),
         "Strict positive disconnected",
     )
 
@@ -303,7 +303,7 @@ def test_sparse_intersection():
         lambda x, y, z: ((x - 1) ** 2 + (y - 1) ** 2 + (z - 1) ** 2) / (x + y + z),
         c,
         cf,
-        ours_test.Box3D(1, 10, 1, 10, 1, 10),
+        ours_test.Box3((1, 1, 1), (10, 10, 10)),
         "Hard Intersection",
     )
 
