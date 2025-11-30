@@ -1,6 +1,6 @@
 # UW CSE507 Course Project
 
-Optimizing positive rational functions $\R^n -> \R$ with polynomial constraints using interval arithmetic, Bernstein polynomial form, and branch-and-bound methods.
+Optimizing positive rational functions $\R^n -> \R$ with polynomial inequality constraints using interval arithmetic, Bernstein polynomial form, and branch-and-bound methods.
 
 ## Current implementation of n-dimensional branch-and-prune algorithm using Bernstein method
 
@@ -20,6 +20,18 @@ We also define a minimal box size, which is, by default, the as same as our erro
 
     - Check (dReal) if the box is fully feasible.
     If so, we solve (dReal) the accurate lower bound with only box constraint; otherwise, we split the box (currently splitting the longest edge).
+
+### Algorithm Heuristics
+
+Box feasibility sampling heuristics
+- completely sound
+- grid (with some density)
+- random (with some seed?)
+
+Box slicing heuristics 
+- 1?
+- 2?
+- dimension of greatest change (derivative)
 
 ## To Do
 - Establish a toolkit of smart (e.g. function-behavior-aware) splitting heuristics.
@@ -61,4 +73,44 @@ This container includes:
 - dReal (v4.21.06.2) binaries
 - Python 3 with dreal package
 
+#### dReal Python Package
+
+The [dReal package](https://pypi.org/project/dreal/) may be installed with
+```bash
+pip install dreal
+```
+Note that the package does not provide some bindings e.g. `dreal.Formula` by default.
+These can be provided by installing the required `.pyi` header[^2] to your environment, e.g. in `venv/lib/python3.*/site-packages/dreal/`.
+```bash
+pip install mypy
+stubgen -p dreal -o stubs/
+```
+
+However, generating the header requires the dReal binary and will not work with the standalone `dreal` package from `pip`.
+For this reason, we have included a copy of the (dReal v4.21.06.2) headers in [dreal-container/_dreal_py.pyi](./dreal-container/_dreal_py.pyi).
+
+
+
+#### Python dReal package
+
+The [dReal package](https://pypi.org/project/dreal/) may be installed with
+```bash
+pip install dreal
+```
+Note that the package does not provide some bindings e.g. `dreal.Formula` by default.
+We can provide these to some 
+```bash
+pip install mypy
+stubgen -p dreal -o stubs/
+```
+
+
+
+```bash
+pip install mypy
+stubgen -p dreal -o stubs/
+```
+
+
 [^1]: Alternatively, without `make`, `cd` into the project root directory and run `echo ROOT_DIR=$(pwd) > .env`.
+[^2]: The `__init__.py` header is already provided.
