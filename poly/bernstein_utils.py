@@ -1,6 +1,7 @@
 import itertools
 from math import comb
 
+
 def bernstein_coefficients_nd(poly, box, degrees=None):
     """
     Correct multivariate Bernstein coefficient computation on a box.
@@ -100,10 +101,12 @@ def bernstein_coefficients_nd(poly, box, degrees=None):
 
     return B, degrees
 
+
 def bernstein_bounds(B):
     """Return min and max of a Bernstein coefficient tensor B (dict)."""
     vals = list(B.values())
     return min(vals), max(vals)
+
 
 def bernstein_bounds_on_box(poly_num, poly_den, box):
     """

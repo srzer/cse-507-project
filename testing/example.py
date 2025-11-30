@@ -1,12 +1,19 @@
-from box_utils import BoxND
-from dreal import *
+# from box import BoxN, Point
+
+from dreal import And, Formula, Variable
+from poly.type import Polynomial, Rational, to_term
+
+
 # the input rational function is represented as two lists of terms
 # each term is [coefficient, [exponent_vector]]
 # for example
+
 # f(x,y) = (2x^2y + 3y^2) / (x^2 + y)
 # numerator_terms = [ [2, [2,1]], [3, [0,2]] ]
 # denominator_terms = [ [1, [2,0]], [1, [0,1]] ]
-def get_poly_terms(n):
+
+
+def rational_objective_example(n: int) -> Rational:
     numerator_terms = []
     denominator_terms = []
 
@@ -14,7 +21,7 @@ def get_poly_terms(n):
     for i in range(n):
         exps = [0] * n
         exps[i] = 2
-        denominator_terms.append([1.0, exps])
+        denominator_terms.append(to_term(1.0, exps))
 
     # ----- Numerator: sum_i (xi^2 -2xi + 1) -----
     constant_term = 0.0
@@ -22,22 +29,23 @@ def get_poly_terms(n):
         # xi^2 term
         exps2 = [0] * n
         exps2[i] = 2
-        numerator_terms.append([1.0, exps2])
+        numerator_terms.append(to_term(1.0, exps2))
 
         # -2 xi term
         exps1 = [0] * n
         exps1[i] = 1
-        numerator_terms.append([2.0, exps1])
+        numerator_terms.append(to_term(-2.0, exps1))
 
         # +1 constant for each dimension, accumulated later
         constant_term += 1.0
 
-    # Add constant term n
-    numerator_terms.append([constant_term, [0] * n])
+    # add constant term n
+    numerator_terms.append(to_term(constant_term, [0] * n))
 
-    return numerator_terms, denominator_terms
+    return Rational(Polynomial(numerator_terms), Polynomial(denominator_terms))
 
-def f_constraint(*xs):
+
+def ball_constraint_example(xs: list[Variable]) -> Formula:
     """
     Example constraint generalized to n dimensions:
 
@@ -64,17 +72,3 @@ def f_constraint(*xs):
         sq_dist(xs, center2) <= 2 * 2,
         sq_dist(xs, center3) <= 2 * 2,
     )
-
-
-def get_init_box(n: int):
-    """
-    Build an initial axis-aligned n-D box:
-
-        [1,10] × [1,10] × ... × [1,10]
-
-    Same as your original 3D version.
-    """
-    lows = [1.0] * n
-    highs = [10.0] * n
-
-    return BoxND(lows, highs)
