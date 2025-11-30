@@ -1,6 +1,6 @@
 .helix/
 
-.env/
+.env
 
 **/__pycache__/*
 
