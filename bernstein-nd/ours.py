@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Tuple, List
+from typing import Tuple, List, Optional
 from collections import deque
 from dreal import *
 from setting import BoxND, f_constraint, get_init_box, get_poly_terms
@@ -15,6 +15,8 @@ def global_min_branch_and_bound(
     n: int,
     poly_num,
     poly_den,
+    vars: Optional[List[Variable]] = None,
+    constraint: Optional[Formula] = None,
     delta_dreal: float = 1e-3,
     min_box_size: float = 0.1,
     eps: float = 1e-4
@@ -39,13 +41,17 @@ def global_min_branch_and_bound(
     """
     assert initial_box.dim == n, "initial_box dimension does not match n."
 
-    # dReal variables x0, x1, ..., x_{n-1}
-    xs = [Variable(f"x{i}") for i in range(n)]
+    if vars is None:
+        xs = [Variable(f"x{i}") for i in range(n)]
+    else:
+        xs = vars
+
+    if constraint is None:
+        constraint = f_constraint(*xs)
 
     # Symbolic constraint and objective
-    constraint = f_constraint(*xs)
     f_expr = rational_expr_symbolic(poly_num, poly_den, xs)
-    print(f_expr)
+    # print(f_expr)
 
     # ----- Step 1: Feasibility check + initial lower bound B -----
 
@@ -56,7 +62,7 @@ def global_min_branch_and_bound(
 
     model = CheckSatisfiability(init_constraints, delta_dreal)
     if model is None:
-        print("No feasible point in the initial region under the given constraint.")
+        # print("No feasible point in the initial region under the given constraint.") 
         return None
 
     # Use the midpoints of model intervals as an initial feasible point
@@ -78,10 +84,10 @@ def global_min_branch_and_bound(
 
         berstein_min = bernstein_bounds_on_box(poly_num, poly_den, box)[0]
         if berstein_min >= B-eps:
-            print("it works!")
             continue
         # 1. Prune by checking if the box can still improve the global bound B:
         #    Is there any point in this box with constraint satisfied and f < B - eps?
+
         improve_formula = And(box_constraints, constraint, f_expr < B - eps)
         m_improve = CheckSatisfiability(improve_formula, delta_dreal)
         if m_improve is None:
@@ -126,14 +132,12 @@ def global_min_branch_and_bound(
         if fully_feasible:
             # print("Box fully feasible, performing minimize on full box.")
             sol_box = Minimize(f_expr, box_constraints, delta_dreal)
-
-            intervals = [sol_box[xi] for xi in xs]
-            mids = [0.5 * (iv.lb() + iv.ub()) for iv in intervals]
-            f_min_approx = rational_value_numeric(poly_num, poly_den, mids)
-
-            if f_min_approx < B:
-                B = f_min_approx
-                # print("Updated global lower bound B =", B)
+            if sol_box:
+                intervals = [sol_box[xi] for xi in xs]
+                mids = [0.5 * (iv.lb() + iv.ub()) for iv in intervals]
+                f_min_approx = rational_value_numeric(poly_num, poly_den, mids)
+                if f_min_approx < B:
+                    B = f_min_approx
             continue
 
         # 3. Otherwise, the box intersects the feasible region but is not
@@ -144,16 +148,18 @@ def global_min_branch_and_bound(
         queue.append(b2)
         # print("Split box into two children.")
 
-    print("Final approximate global lower bound B =", B)
+    # print("Final approximate global lower bound B =", B) 
     return B
 
 
 # --------- Improved ----------
+
 def feasible_min_branch_and_bound(
     initial_box: BoxND,
     n: int,
     poly_num,
     poly_den,
+    vars: Optional[List[Variable]] = None,
     delta_dreal: float = 1e-3,
     min_box_size: float = 0.1,
     eps: float = 1e-4,
@@ -162,7 +168,11 @@ def feasible_min_branch_and_bound(
     assert initial_box.dim == n, "initial_box dimension does not match n."
 
     # dReal variables x0, x1, ..., x_{n-1}
-    xs = [Variable(f"x{i}") for i in range(n)]
+    if vars is None:
+        xs = [Variable(f"x{i}") for i in range(n)]
+    else:
+        xs = vars
+
     f_expr = rational_expr_symbolic(poly_num, poly_den, xs)
 
     B = initial_B
@@ -174,8 +184,7 @@ def feasible_min_branch_and_bound(
 
     while queue:
         box = queue.pop()
-        box_constraints = build_box_constraints(xs, box)
-
+        
         berstein_min = bernstein_bounds_on_box(poly_num, poly_den, box)[0]
         if berstein_min >= B-eps:
             continue
@@ -213,6 +222,8 @@ def improved_global_min_branch_and_bound(
     n: int,
     poly_num,
     poly_den,
+    vars: Optional[List[Variable]] = None,
+    constraint: Optional[Formula] = None,
     delta_dreal: float = 1e-3,
     min_box_size: float = 0.1,
     eps: float = 1e-4
@@ -237,15 +248,16 @@ def improved_global_min_branch_and_bound(
     """
     assert initial_box.dim == n, "initial_box dimension does not match n."
 
-    # dReal variables x0, x1, ..., x_{n-1}
-    xs = [Variable(f"x{i}") for i in range(n)]
+    if vars is None:
+        xs = [Variable(f"x{i}") for i in range(n)]
+    else:
+        xs = vars
 
-    # Symbolic constraint and objective
-    constraint = f_constraint(*xs)
+    if constraint is None:
+        constraint = f_constraint(*xs)
+
     f_expr = rational_expr_symbolic(poly_num, poly_den, xs)
-    print(f_expr)
-
-    # ----- Step 1: Feasibility check + initial lower bound B -----
+    # print(f_expr) 
 
     init_constraints = And(
         build_box_constraints(xs, initial_box),
@@ -254,7 +266,7 @@ def improved_global_min_branch_and_bound(
 
     model = CheckSatisfiability(init_constraints, delta_dreal)
     if model is None:
-        print("No feasible point in the initial region under the given constraint.")
+        # print("No feasible point in the initial region under the given constraint.") 
         return None
 
     # Use the midpoints of model intervals as an initial feasible point
@@ -308,10 +320,11 @@ def improved_global_min_branch_and_bound(
                 n,
                 poly_num,
                 poly_den,
-                delta_dreal,
-                min_box_size,
-                eps,
-                B
+                vars=xs,
+                delta_dreal=delta_dreal,
+                min_box_size=min_box_size,
+                eps=eps,
+                initial_B=B
             )
             if B_temp < B:
                 B = B_temp
@@ -321,17 +334,18 @@ def improved_global_min_branch_and_bound(
         queue.append(b1)
         queue.append(b2)
 
-    print("Final approximate global lower bound B =", B)
+    # print("Final approximate global lower bound B =", B) 
     return B
 
 # --------- Baseline: direct dReal Minimize on whole region ---------
-
 
 def baseline_min_dreal(
     initial_box: BoxND,
     n: int,
     poly_num,
     poly_den,
+    vars: Optional[List[Variable]] = None,
+    constraint: Optional[Formula] = None,
     delta_dreal: float = 1e-3
 ):
     """
@@ -345,37 +359,40 @@ def baseline_min_dreal(
     """
     assert initial_box.dim == n, "initial_box dimension does not match n."
 
-    xs = [Variable(f"x{i}") for i in range(n)]
+    if vars is None:
+        xs = [Variable(f"x{i}") for i in range(n)]
+    else:
+        xs = vars
+
+    if constraint is None:
+        constraint = f_constraint(*xs)
 
     f_expr = rational_expr_symbolic(poly_num, poly_den, xs)
-    print(f_expr)
-    constraint = f_constraint(*xs)
+    # print(f_expr)
 
     region_constraints = And(
         build_box_constraints(xs, initial_box),
         constraint
     )
 
-    # First check feasibility
     model = CheckSatisfiability(region_constraints, delta_dreal)
     if model is None:
-        print("[baseline] No feasible point in initial_box under f_constraint.")
+        # print("[baseline] No feasible point in initial_box under f_constraint.")
         return None
 
-    # Then perform global Minimize over the region
     sol_box = Minimize(f_expr, region_constraints, delta_dreal)
+    if not sol_box:
+        return None
 
     intervals = [sol_box[xi] for xi in xs]
     mids = [0.5 * (iv.lb() + iv.ub()) for iv in intervals]
-
     f_min_approx = rational_value_numeric(poly_num, poly_den, mids)
 
-    print("[baseline] approximate global minimum f ≈", f_min_approx)
+    # print("[baseline] approximate global minimum f ≈", f_min_approx)
     return f_min_approx
 
 
 # --------- Example main ---------
-
 
 if __name__ == "__main__":
     # Dimension n: you can change this manually or parse from command line
@@ -400,7 +417,9 @@ if __name__ == "__main__":
     )
     t1 = time.time()
     print("Branch-and-bound time:", t1 - t0, "seconds")
+    
     time.sleep(2)
+    
     t2 = time.time()
     improved_global_min_branch_and_bound(
         initial_box=init_box,
@@ -413,7 +432,9 @@ if __name__ == "__main__":
     )
     t3 = time.time()
     print("Improved Branch-and-bound time:", t3 - t2, "seconds")
+    
     time.sleep(2)
+    
     t4 = time.time()
     baseline_min_dreal(
         initial_box=init_box,
