@@ -188,22 +188,22 @@ def feasible_min_branch_and_bound(
         berstein_min = bernstein_bounds_on_box(poly_num, poly_den, box)[0]
         if berstein_min >= B-eps:
             continue
-        # # 1. Prune by checking if the box can still improve the global bound B:
-        # #    Is there any point in this box with constraint satisfied and f < B - eps?
-        # improve_formula = And(box_constraints, f_expr < B - eps)
-        # m_improve = CheckSatisfiability(improve_formula, delta_dreal)
-        # if m_improve is None:
-        #     continue
-        # else:
-        #     # extract a point from m_improve, and update B
-        #     intervals = [m_improve[xi] for xi in xs]
-        #     mids = [0.5 * (iv.lb() + iv.ub()) for iv in intervals]
-        #     f_at_mids = rational_value_numeric(poly_num, poly_den, mids)
-        #     if f_at_mids < B:
-        #         B = f_at_mids
-        #         # print("Updated global lower bound B =", B)
-
-        # 2. If the box is already small enough, pick the center value
+        corners = []
+        def generate_corners(idx, current):
+            if idx == box.dim:
+                corners.append(current.copy())
+                return
+            current.append(box.lows[idx])
+            generate_corners(idx + 1, current)
+            current.pop()
+            current.append(box.highs[idx])
+            generate_corners(idx + 1, current)
+            current.pop()
+        generate_corners(0, [])
+        for corner in corners:
+            f_at_corner = rational_value_numeric(poly_num, poly_den, corner)
+            if f_at_corner < B:
+                B = f_at_corner
         if max_side(box) <= min_box_size:
             intervals = [Interval(lo, hi) for lo, hi in zip(box.lows, box.highs)]
             mids = [0.5 * (iv.lb() + iv.ub()) for iv in intervals]
