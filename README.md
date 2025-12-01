@@ -15,11 +15,16 @@ We also define a minimal box size, which is, by default, the as same as our erro
     - Solve (Bernstein method) a rough lower bound on this box. If it's larger than current lower bound, skip.
 
     - Solve (dReal) a solution in the box satisfying the constraints and improving the lower bound at least by $\epsilon$.
-    If unsat, then skip; If sat, then update the lower bound.
+        - If unsat, then skip;
+        - If sat, then update the lower bound using the solution.
     - If the box is already smaller than the minimal box size, skip.
 
-    - Check (dReal) if the box is fully feasible.
-    If so, we solve (dReal) the accurate lower bound with only box constraint; otherwise, we split the box (currently splitting the longest edge).
+    - Check (dReal) whether the box is fully feasible.
+        - If so, we invoke a sub-program (no dReal involved) to solve the minimum of this feasible box;
+          - Solve (Bernstein method) a rough lower bound on this box. If it's larger than current lower bound, skip.
+          - If the box is already smaller than the minimal box size, skip.
+          - Otherwise split it into two small boxes and iterate.
+        - Otherwise, split it into two small boxes.
 
 ### Algorithm Heuristics
 
