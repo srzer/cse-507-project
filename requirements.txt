@@ -1,0 +1,10 @@
+dreal==4.21.6.2
+librt==0.6.3
+nodeenv==1.9.1
+numpy==2.2.6
+pathspec==0.12.1
+pyright==1.1.407
+ruff==0.14.7
+scipy==1.15.3
+tomli==2.3.0
+typing_extensions==4.15.0
