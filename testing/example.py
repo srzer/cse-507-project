@@ -13,26 +13,26 @@ from poly.type import Polynomial, Rational, to_term
 # denominator_terms = [ [1, [2,0]], [1, [0,1]] ]
 
 
-def rational_objective_example(n: int) -> Rational:
+def rational_objective_example(dim: int) -> Rational:
     numerator_terms = []
     denominator_terms = []
 
     # ----- Denominator: sum_i xi^2 -----
-    for i in range(n):
-        exps = [0] * n
+    for i in range(dim):
+        exps = [0] * dim
         exps[i] = 2
         denominator_terms.append(to_term(1.0, exps))
 
     # ----- Numerator: sum_i (xi^2 -2xi + 1) -----
     constant_term = 0.0
-    for i in range(n):
+    for i in range(dim):
         # xi^2 term
-        exps2 = [0] * n
+        exps2 = [0] * dim
         exps2[i] = 2
         numerator_terms.append(to_term(1.0, exps2))
 
         # -2 xi term
-        exps1 = [0] * n
+        exps1 = [0] * dim
         exps1[i] = 1
         numerator_terms.append(to_term(-2.0, exps1))
 
@@ -40,12 +40,12 @@ def rational_objective_example(n: int) -> Rational:
         constant_term += 1.0
 
     # add constant term n
-    numerator_terms.append(to_term(constant_term, [0] * n))
+    numerator_terms.append(to_term(constant_term, [0] * dim))
 
     return Rational(Polynomial(numerator_terms), Polynomial(denominator_terms))
 
 
-def ball_constraint_example(xs: list[Variable]) -> Formula:
+def ball_constraint_example(vars: list[Variable]) -> Formula:
     """
     Example constraint generalized to n dimensions:
 
@@ -58,17 +58,17 @@ def ball_constraint_example(xs: list[Variable]) -> Formula:
 
     # Build three centers similar to the 3D case:
     # (3,3,3,...), (4,4,4,...), (3,4,4,...)
-    n = len(xs)
+    dim = len(vars)
 
-    center1 = [3] * n
-    center2 = [4] * n
-    center3 = [3] + [4] * (n - 1)
+    center1 = [3] * dim
+    center2 = [4] * dim
+    center3 = [3] + [4] * (dim - 1)
 
     def sq_dist(xs, center):
         return sum((x - c) ** 2 for x, c in zip(xs, center))
 
     return And(
-        sq_dist(xs, center1) <= 2 * 2,
-        sq_dist(xs, center2) <= 2 * 2,
-        sq_dist(xs, center3) <= 2 * 2,
+        sq_dist(vars, center1) <= 2 * 2,
+        sq_dist(vars, center2) <= 2 * 2,
+        sq_dist(vars, center3) <= 2 * 2,
     )
