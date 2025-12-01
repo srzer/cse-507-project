@@ -1,7 +1,6 @@
 import sys
 import os
 
-# Ensure we can import from the parent directory
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from test_suite import (
@@ -20,7 +19,6 @@ from test_suite import (
 )
 
 if __name__ == "__main__":
-    # Define the list of problems to run
     problems = [
         test_sanity_poly(),
         test_sanity_rational(),
@@ -35,5 +33,4 @@ if __name__ == "__main__":
         test_main_example()
     ]
 
-    # Run the experiments
     run_test_suite(problems)

@@ -7,42 +7,28 @@ from dataclasses import dataclass
 from typing import Callable, List
 from collections import defaultdict
 
-# --- PATH SETUP ---
-# 1. Add Project Root (for 'box' and 'poly')
 current_dir = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(current_dir)
 if project_root not in sys.path:
     sys.path.append(project_root)
 
-# 2. Add 'bernstein-nd' specifically (to handle the hyphen in folder name)
 bernstein_path = os.path.join(project_root, "bernstein-nd")
 if bernstein_path not in sys.path:
     sys.path.append(bernstein_path)
-# ------------------
 
-# dReal Imports
 from dreal import Variable, And, Or
 
-# SciPy Optimizers
 from scipy.optimize import shgo, dual_annealing, differential_evolution
 
-# Project Imports
 from box import BoxN, Point
-# UPDATED: Import PolyBuilder and make_vars from the package
 from poly import Rational, Polynomial, PolyBuilder, make_vars
 from poly.type import to_term
 
-# Import directly from 'ours.py'
 from ours import global_min_branch_and_bound, baseline_min_dreal
-# Import helper to convert Polynomial list -> Dictionary
 from poly_utils import poly_from_terms
-# Import BoxND to fix the type mismatch
 from box_utils import BoxND
 
 
-# ==========================================
-# ============== TEST RUNNER ===============
-# ==========================================
 
 @dataclass
 class TestProblem:
@@ -180,9 +166,6 @@ def run_test_suite(problems: List[TestProblem]):
         )
 
 
-# ==========================================
-# =========== TEST CASE DEFS ===============
-# ==========================================
 
 def test_sanity_poly():
     x, y, z = make_vars(3)
@@ -260,17 +243,11 @@ def test_main_example():
     dim = 3
     x, y, z = make_vars(dim)
     
-    # Reconstruct the problem from main.py / example.py
-    # Num: (x-1)^2 + (y-1)^2 + (z-1)^2
-    # Den: x^2 + y^2 + z^2
     num = (x - 1)**2 + (y - 1)**2 + (z - 1)**2
     den = x**2 + y**2 + z**2
     r_obj = num / den
 
-    # Constraints: Intersection of 3 balls
-    # Centers: c1=(3,3,3), c2=(4,4,4), c3=(3,4,4)
-    # Radius^2 = 4
-    
+
     def constraint_maker(x, y, z, A, O):
         return A(
             (x - 3)**2 + (y - 3)**2 + (z - 3)**2 <= 4,
@@ -284,8 +261,6 @@ def test_main_example():
         c3 = (x - 3)**2 + (y - 4)**2 + (z - 4)**2 <= 4
         return c1 and c2 and c3
 
-    # Python lambda for SciPy
-    # Note: SciPy handles division by zero by returning inf, but here range is [1,10] so x^2+... > 0
     func_lambda = lambda x, y, z: ((x - 1)**2 + (y - 1)**2 + (z - 1)**2) / (x**2 + y**2 + z**2)
 
     return TestProblem(
@@ -297,23 +272,3 @@ def test_main_example():
         BoxN(Point((1, 1, 1)), Point((10, 10, 10))), 
         "Quadratic/Quadratic Rational"
     )
-
-# ==========================================
-# ================= MAIN ===================
-# ==========================================
-
-if __name__ == "__main__":
-    problems = [
-        test_sanity_poly(),
-        test_sanity_rational(),
-        test_rational_bowl(),
-        test_himmelblau_ratio(),
-        test_split_islands(),
-        test_singularity_edge(),
-        test_pole_avoidance(),
-        test_rational_valley(),
-        test_positive_islands(),
-        test_sparse_intersection(),
-        test_main_example(),  # Added here
-    ]
-    run_test_suite(problems)
