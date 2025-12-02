@@ -24,9 +24,16 @@ from box import BoxN, Point
 from poly import Rational, Polynomial, PolyBuilder, make_vars
 from poly.type import to_term
 
-from ours import global_min_branch_and_bound, baseline_min_dreal
+# UPDATED IMPORT: Added feasible_min_branch_and_bound
+from ours import (
+    global_min_branch_and_bound, 
+    improved_global_min_branch_and_bound, 
+    feasible_min_branch_and_bound,
+    baseline_min_dreal
+)
 from poly_utils import poly_from_terms
 from box_utils import BoxND
+
 
 @dataclass
 class TestProblem:
@@ -71,17 +78,20 @@ def run_scipy_dual_annealing(p: TestProblem):
 
 
 def run_test_suite(problems: List[TestProblem]):
+    # UPDATED HEADER: Added 'FEASIBLE' column and updated Time column
     header = (
         f"{'TEST NAME':<20} | "
-        f"{'MY SOLVER':<10} | "
+        f"{'BASIC':<10} | "
+        f"{'IMPROVED':<10} | "
+        f"{'FEASIBLE':<10} | "
         f"{'DREAL':<10} | "
         f"{'SHGO':<10} | "
         f"{'DE':<10} | "
         f"{'DA':<10} | "
-        f"{'TIME (My/Dr/Sh/DE/DA)'}"
+        f"{'TIME (Bas/Imp/Feas/Dr/Sh/DE/DA)'}"
     )
     print(header)
-    print("-" * 125)
+    print("-" * 155)
 
     for p in problems:
         print(f"Running {p.name}...", end="\r")
@@ -100,10 +110,10 @@ def run_test_suite(problems: List[TestProblem]):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
 
-            # 1. My Solver
+            # 1. Basic Solver
             t0 = time.time()
             try:
-                my_res = global_min_branch_and_bound(
+                basic_res = global_min_branch_and_bound(
                     initial_box=box_nd,
                     n=dim,
                     poly_num=num_dict,
@@ -116,11 +126,46 @@ def run_test_suite(problems: List[TestProblem]):
                 )
             except Exception as e:
                 # print(e)
-                my_res = "Error"
-            t_my = time.time() - t0
+                basic_res = "Error"
+            t_basic = time.time() - t0
 
-            # 2. dReal Baseline
+            # 2. Improved Solver
             t1 = time.time()
+            try:
+                imp_res = improved_global_min_branch_and_bound(
+                    initial_box=box_nd,
+                    n=dim,
+                    poly_num=num_dict,
+                    poly_den=den_dict,
+                    vars=dreal_vars,
+                    constraint=dreal_constraint,
+                    delta_dreal=1e-3,
+                    min_box_size=1e-3,
+                    eps=1e-3
+                )
+            except Exception as e:
+                imp_res = "Error"
+            t_imp = time.time() - t1
+
+            # 3. Feasible Solver
+            t_feas_start = time.time()
+            try:
+                feas_res = feasible_min_branch_and_bound(
+                    initial_box=box_nd,
+                    n=dim,
+                    poly_num=num_dict,
+                    poly_den=den_dict,
+                    vars=dreal_vars,
+                    delta_dreal=1e-3,
+                    min_box_size=1e-3,
+                    eps=1e-3
+                )
+            except Exception as e:
+                feas_res = "Error"
+            t_feas = time.time() - t_feas_start
+
+            # 4. dReal Baseline
+            t2 = time.time()
             try:
                 dreal_res = baseline_min_dreal(
                     initial_box=box_nd,
@@ -133,20 +178,20 @@ def run_test_suite(problems: List[TestProblem]):
                 )
             except Exception:
                 dreal_res = "Error"
-            t_dreal = time.time() - t1
+            t_dreal = time.time() - t2
 
-            # 3. SciPy Baselines
-            t2 = time.time()
-            shgo_res = run_scipy_shgo(p)
-            t_sh = time.time() - t2
-
+            # 5. SciPy Baselines
             t3 = time.time()
-            de_res = run_scipy_diff_evo(p)
-            t_de = time.time() - t3
+            shgo_res = run_scipy_shgo(p)
+            t_sh = time.time() - t3
 
             t4 = time.time()
+            de_res = run_scipy_diff_evo(p)
+            t_de = time.time() - t4
+
+            t5 = time.time()
             da_res = run_scipy_dual_annealing(p)
-            t_da = time.time() - t4
+            t_da = time.time() - t5
 
         def fmt(val):
             if val is None: return "None"
@@ -155,12 +200,14 @@ def run_test_suite(problems: List[TestProblem]):
 
         print(
             f"{p.name:<20} | "
-            f"{fmt(my_res):<10} | "
+            f"{fmt(basic_res):<10} | "
+            f"{fmt(imp_res):<10} | "
+            f"{fmt(feas_res):<10} | "
             f"{fmt(dreal_res):<10} | "
             f"{fmt(shgo_res):<10} | "
             f"{fmt(de_res):<10} | "
             f"{fmt(da_res):<10} | "
-            f"{t_my:.2f}/{t_dreal:.2f}/{t_sh:.2f}/{t_de:.2f}/{t_da:.2f}s"
+            f"{t_basic:.2f}/{t_imp:.2f}/{t_feas:.2f}/{t_dreal:.2f}/{t_sh:.2f}/{t_de:.2f}/{t_da:.2f}s"
         )
 
 # ==========================================
