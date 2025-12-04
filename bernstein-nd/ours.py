@@ -4,7 +4,7 @@ from collections import deque
 from dreal import *
 from setting import BoxND, f_constraint, get_init_box, get_poly_terms
 from poly_utils import *
-from bernstein_utils import *
+from affine_utils import *
 from box_utils import *
 import time
 
@@ -19,7 +19,8 @@ def global_min_branch_and_bound(
     constraint: Optional[Formula] = None,
     delta_dreal: float = 1e-3,
     min_box_size: float = 0.1,
-    eps: float = 1e-4
+    eps: float = 1e-4,
+    split_func = None
 ):
     """
     Global minimization of f(x1,...,xn) under a general constraint using
@@ -82,8 +83,8 @@ def global_min_branch_and_bound(
         box = queue.pop()
         box_constraints = build_box_constraints(xs, box)
 
-        berstein_min = bernstein_bounds_on_box(poly_num, poly_den, box)[0]
-        if berstein_min >= B-eps:
+        affine_min = affine_bounds_on_box(poly_num, poly_den, box)[0]
+        if affine_min >= B-eps:
             continue
         # 1. Prune by checking if the box can still improve the global bound B:
         #    Is there any point in this box with constraint satisfied and f < B - eps?
@@ -106,23 +107,6 @@ def global_min_branch_and_bound(
         # 2. If the box is already small enough, do a local Minimize on this box
         if max_side(box) <= min_box_size:
             continue
-            # NOTE: 3 ways; 1) directly skip 2) minimize with only the box constraint 3) minimize with both box and global constraint
-            # NOTE: if we set min_box_size = delta_dreal, then we can directly skip.
-            # # print("Box small enough, performing local minimize.")
-            # local_constraints = box_constraints
-            # # You can choose to also include the global constraint here:
-            local_constraints = And(box_constraints, constraint)
-
-            # # dreal
-            sol_box = Minimize(f_expr, local_constraints, delta_dreal)
-            intervals = [sol_box[xi] for xi in xs]
-            mids = [0.5 * (iv.lb() + iv.ub()) for iv in intervals]
-            f_min_approx = rational_value_numeric(poly_num, poly_den, mids)
-            
-            if f_min_approx < B:
-                B = f_min_approx
-            #     # print("Updated global lower bound B =", B)
-            continue
 
         # 2bis. If the entire box is within the feasible region, we can also
         #       call Minimize directly on the whole box.
@@ -143,7 +127,7 @@ def global_min_branch_and_bound(
         # 3. Otherwise, the box intersects the feasible region but is not
         #    fully inside it, and it may still contain points with f < B - eps.
         #    We split it and continue the search.
-        b1, b2 = split_box(box)
+        b1, b2 = split_func(poly_num, poly_den, box)
         queue.append(b1)
         queue.append(b2)
         # print("Split box into two children.")
@@ -163,7 +147,8 @@ def feasible_min_branch_and_bound(
     delta_dreal: float = 1e-3,
     min_box_size: float = 0.1,
     eps: float = 1e-4,
-    initial_B: float = 1e9
+    initial_B: float = 1e9,
+    split_func = None
 ):
     assert initial_box.dim == n, "initial_box dimension does not match n."
 
@@ -185,8 +170,8 @@ def feasible_min_branch_and_bound(
     while queue:
         box = queue.pop()
         
-        berstein_min = bernstein_bounds_on_box(poly_num, poly_den, box)[0]
-        if berstein_min >= B-eps:
+        affine_min = affine_bounds_on_box(poly_num, poly_den, box)[0]
+        if affine_min >= B-eps:
             continue
         corners = []
         def generate_corners(idx, current):
@@ -212,7 +197,7 @@ def feasible_min_branch_and_bound(
                 B = f_at_mids
             continue
 
-        b1, b2 = split_box(box)
+        b1, b2 = split_func(poly_num, poly_den, box)
         queue.append(b1)
         queue.append(b2)
     return B
@@ -226,7 +211,8 @@ def improved_global_min_branch_and_bound(
     constraint: Optional[Formula] = None,
     delta_dreal: float = 1e-3,
     min_box_size: float = 0.1,
-    eps: float = 1e-4
+    eps: float = 1e-4,
+    split_func = None,
 ):
     """
     Global minimization of f(x1,...,xn) under a general constraint using
@@ -286,8 +272,8 @@ def improved_global_min_branch_and_bound(
         box = queue.pop()
         box_constraints = build_box_constraints(xs, box)
 
-        berstein_min = bernstein_bounds_on_box(poly_num, poly_den, box)[0]
-        if berstein_min >= B-eps:
+        affine_min = affine_bounds_on_box(poly_num, poly_den, box)[0]
+        if affine_min >= B-eps:
             continue
         # 1. Prune by checking if the box can still improve the global bound B:
         #    Is there any point in this box with constraint satisfied and f < B - eps?
@@ -324,13 +310,14 @@ def improved_global_min_branch_and_bound(
                 delta_dreal=delta_dreal,
                 min_box_size=min_box_size,
                 eps=eps,
-                initial_B=B
+                initial_B=B,
+                split_func=split_func
             )
             if B_temp < B:
                 B = B_temp
             continue
             
-        b1, b2 = split_box(box)
+        b1, b2 = split_func(poly_num, poly_den, box)
         queue.append(b1)
         queue.append(b2)
 
@@ -413,14 +400,31 @@ if __name__ == "__main__":
         poly_den=poly_den,
         delta_dreal=1e-3,       # δ for dReal
         min_box_size=1e-3,  # stop splitting when max side < min_box_size
-        eps=1e-3                # pruning margin
+        eps=1e-3,                # pruning margin
+        split_func=split_box_length
     )
     t1 = time.time()
     print("Branch-and-bound time:", t1 - t0, "seconds")
     
     time.sleep(2)
+
+    t0 = time.time()
+    global_min_branch_and_bound(
+        initial_box=init_box,
+        n=n,
+        poly_num=poly_num,
+        poly_den=poly_den,
+        delta_dreal=1e-3,       # δ for dReal
+        min_box_size=1e-3,  # stop splitting when max side < min_box_size
+        eps=1e-3,                # pruning margin
+        split_func=split_box_gradient
+    )
+    t1 = time.time()
+    print("Branch-and-bound (heuristic) time:", t1 - t0, "seconds")
     
-    t2 = time.time()
+    time.sleep(2)
+
+    t0 = time.time()
     improved_global_min_branch_and_bound(
         initial_box=init_box,
         n=n,
@@ -428,13 +432,28 @@ if __name__ == "__main__":
         poly_den=poly_den,
         delta_dreal=1e-3,       # δ for dReal
         min_box_size=1e-3,  # stop splitting when max side < min_box_size
-        eps=1e-3                # pruning margin
+        eps=1e-3,                # pruning margin
+        split_func=split_box_length
     )
-    t3 = time.time()
-    print("Improved Branch-and-bound time:", t3 - t2, "seconds")
+    t1 = time.time()
+    print("Improved Branch-and-bound time:", t1 - t0, "seconds")
     
     time.sleep(2)
-    
+
+    t0 = time.time()
+    improved_global_min_branch_and_bound(
+        initial_box=init_box,
+        n=n,
+        poly_num=poly_num,
+        poly_den=poly_den,
+        delta_dreal=1e-3,       # δ for dReal
+        min_box_size=1e-3,  # stop splitting when max side < min_box_size
+        eps=1e-3,                # pruning margin
+        split_func=split_box_gradient
+    )
+    t1 = time.time()
+    print("Improved Branch-and-bound (heuristic) time:", t1 - t0, "seconds")
+
     t4 = time.time()
     baseline_min_dreal(
         initial_box=init_box,
