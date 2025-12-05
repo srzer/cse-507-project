@@ -1,10 +1,29 @@
 import math
-from dataclasses import dataclass
-from typing import NewType, Tuple, Self
+from dataclasses import dataclass, replace
+from typing import Tuple
+from typing_extensions import Self
 
-from dreal import Box, Interval, Variable
+from dreal import Box
 
-Point = NewType("Point", Tuple[float, ...])
+
+# Point = NewType("Point", Tuple[float, ...])
+@dataclass(frozen=True)
+class Point:
+    coords: Tuple[float, ...]
+
+    def with_value(self, i: int, v: float) -> Self:
+        assert i < len(self), f"Point index {i} out of range {len(self)}."
+        new = self.coords[:i] + (v,) + self.coords[i + 1 :]
+        return replace(self, coords=Point(new))
+
+    def __getitem__(self, i: int) -> float:
+        return self.coords[i]
+
+    def __iter__(self):
+        return iter(self.coords)
+
+    def __len__(self):
+        return len(self.coords)
 
 
 # immutable
@@ -22,14 +41,29 @@ class BoxN:
         return len(self.min)
 
     @property
-    # get center point of box
+    # center point of box
     def center(self: Self) -> Point:
         return Point(tuple((hi + lo) / 2 for lo, hi in zip(self.min, self.max)))
 
     @property
-    # return length of longest side
-    def max_side(self: Self) -> float:
-        return max(hi - lo for lo, hi in zip(self.min, self.max))
+    # lengths of all sides
+    def lengths(self: Self) -> list[float]:
+        return [hi - lo for lo, hi in zip(self.min, self.max)]
+
+    # center of side
+    def _side_center(self: Self, i: int):
+        assert 0 <= i <= self.dim, f"Side index {i} our of range {self.dim}."
+        return (self.max[i] + self.min[i]) / 2
+
+    @property
+    # length of longest side
+    def max_side_length(self: Self) -> float:
+        return max(self.lengths)
+
+    @property
+    # midpoint of longest side
+    def max_side_center(self: Self) -> float:
+        return self._side_center(self._max_side_idx())
 
     @property
     # calculate box volume
@@ -41,16 +75,6 @@ class BoxN:
     def _max_side_idx(self: Self) -> int:
         sides = [hi - lo for lo, hi in zip(self.min, self.max)]
         return sides.index(max(sides))
-
-    # split on longest dimension
-    def split_on_longest(self: Self) -> Tuple[Self, Self]:
-        idx = self._max_side_idx()
-        mid = (self.min[idx] + self.max[idx]) / 2
-        # new tuple with updated element at idx
-        max1 = self.max[:idx] + (mid,) + self.max[idx + 1 :]
-        min2 = self.min[:idx] + (mid,) + self.min[idx + 1 :]
-
-        return BoxN(self.min, Point(max1)), BoxN(Point(min2), self.max)
 
     # check if box containts a point
     def contains(self: Self, point: Point) -> bool:
