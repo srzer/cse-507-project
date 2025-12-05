@@ -7,4 +7,5 @@ pyright==1.1.407
 ruff==0.14.7
 scipy==1.15.3
 tomli==2.3.0
+typing==3.7.4.3
 typing_extensions==4.15.0
