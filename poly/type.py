@@ -3,18 +3,54 @@ from dataclasses import dataclass
 from typing import Any, List, NewType, Tuple
 
 from dreal import Expression, Variable
+from typing_extensions import Self
 
 from box import Point
 
-"""
-     exponent list length = # of vars
-    [coeff: [exp1, exp2, ..., expN]]
-"""
-
+# exponent list length = # of vars
 Term = NewType("Term", Tuple[float, Tuple[int, ...]])  # (coeff, [exponents])
-Polynomial = NewType("Polynomial", List[Term])
 
-# MonomialDict = Dict[Tuple[int, ...], float] # (coeff, [exponents])
+
+@dataclass(frozen=True)
+# polynomial in power basis form
+# all terms must have exponent tuples of same length
+class Polynomial:
+    terms: List[Term]
+
+    # validate all exponent tuples have consistent dimension.
+    def __post_init__(self):
+        if not self.terms:
+            return
+
+        # use expected dimension from first term
+        n = len(self.terms[0][1])
+
+        # validate all terms match this dimension
+        for coeff, exps in self.terms:
+            if len(exps) != n:
+                raise ValueError(
+                    f"Inconsistent exponent dimensions in polynomial: "
+                    f"expected {n} variables, got {len(exps)} in term ({coeff}, {exps})"
+                )
+
+    @property
+    # number of vars in polynomial
+    def n_vars(self) -> int:
+        return len(self.terms[0][1]) if self.terms else 0
+
+    # get max degree for each vav
+    def max_var_degrees(self: Self) -> list[int]:
+        if not self.terms:
+            return []
+
+        degrees = [0] * self.n_vars
+        for _, exps in self.terms:
+            for i, exp in enumerate(exps):
+                degrees[i] = max(degrees[i], exp)
+        return degrees
+
+    def __iter__(self):
+        return iter(self.terms)
 
 
 @dataclass(frozen=True)
@@ -22,12 +58,28 @@ class Rational:
     num: Polynomial
     den: Polynomial
 
+    # validate num and den have same # of vars
+    def __post_init__(self: Self):
+        if self.num.n_vars != self.den.n_vars:
+            raise ValueError(
+                f"Numerator and denominator must have same dimensions: "
+                f"num has {self.num.n_vars} vars, den has {self.den.n_vars} vars"
+            )
 
+    @property
+    # number of variables in rational function
+    def n_vars(self) -> int:
+        return self.num.n_vars
+
+
+# create a term from coeff and exponent list
 def to_term(coeff: float, exps: list[int]) -> Term:
     return Term((coeff, tuple(exps)))
 
 
-# def to_monomial_dict(poly: Polymonial) -> MonomialDict
+# create a polynomial with expontent length validation
+def to_polynomial(terms: List[Term]) -> Polynomial:
+    return Polynomial(terms)
 
 
 # kinda cool that this works so polymorphically
