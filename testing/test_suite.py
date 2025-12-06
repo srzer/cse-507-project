@@ -10,14 +10,14 @@ from scipy.optimize import shgo, dual_annealing, differential_evolution
 
 from box import BoxN, Point
 from poly import Rational, Polynomial, PolyBuilder, make_vars
-from poly import to_term
+from poly.type import to_term
 
 # UPDATED IMPORT: Added feasible_min_branch_and_bound
 from ours import (
-    global_min_branch_and_bound,
-    improved_global_min_branch_and_bound,
+    global_min_branch_and_bound, 
+    improved_global_min_branch_and_bound, 
     feasible_min_branch_and_bound,
-    baseline_min_dreal,
+    baseline_min_dreal
 )
 from poly_utils import poly_from_terms
 from box_utils import BoxND
@@ -216,6 +216,23 @@ def run_test_suite(problems: List[TestProblem]):
             f"{t_basic:.2f}/{t_imp:.2f}/{t_feas:.2f}/{t_dreal:.2f}/{t_sh:.2f}/{t_de:.2f}/{t_da:.2f}s"
         )
 
+# ==========================================
+# Helpers for Intersection Tests
+# ==========================================
+
+def _get_3sphere_constraints(x, y, z):
+    return [
+        (x - 3)**2 + (y - 3)**2 + (z - 3)**2 <= 4,
+        (x - 4)**2 + (y - 4)**2 + (z - 4)**2 <= 4,
+        (x - 3)**2 + (y - 4)**2 + (z - 4)**2 <= 4
+    ]
+
+def _check_3sphere_constraints(x, y, z):
+    return (
+        ((x - 3)**2 + (y - 3)**2 + (z - 3)**2 <= 4) and
+        ((x - 4)**2 + (y - 4)**2 + (z - 4)**2 <= 4) and
+        ((x - 3)**2 + (y - 4)**2 + (z - 4)**2 <= 4)
+    )
 
 # ==========================================
 # Helpers for Intersection Tests
