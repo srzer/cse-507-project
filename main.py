@@ -1,8 +1,13 @@
 import time
 
-# TODO: export these imports in ./box/__init__.py
-from box.constraints import build_basic_box
-from testing.example import rational_objective_example, ball_constraint_example
+from box.split import SplitGradient, SplitLongestSide
+from objective.bound.affine import AffineBounds, _affine_bounds
+from objective.bound.bernstein import BernsteinBounds
+from testing.example import (
+    rational_objective_example,
+    ball_constraint_example,
+    initial_constraint_box,
+)
 
 from algorithms import (
     GlobalMinBranchAndBound,
@@ -24,23 +29,42 @@ if __name__ == "__main__":
     # pruning margin
     # both above values were set to 1e-3
     err = 1e-4
-    init_box = build_basic_box(1, 10, dim)
+    init_box = initial_constraint_box(dim)
     fn_obj = rational_objective_example(dim)
     vars = global_algo._default_variables(dim)
-    ball_constr = ball_constraint_example(vars)
+    constr = ball_constraint_example(vars)
+    splitter = SplitGradient()
+    # splitter = SplitLongestSide()
+    # bounder = AffineBounds()
+    bounder = BernsteinBounds()
 
-    print(f"Running with parameters:")
-    print(f"  dim = {dim}")
+    args = (
+        dim,
+        init_box,
+        fn_obj,
+        vars,
+        constr,
+        splitter,
+        bounder,
+        min_box_size,
+        delta,
+        err,
+    )
+
+    print(f"running with parameters:")
+    print(f"  dim          = {dim}")
+    print(f"  init_box     = {init_box}")
+    print(f"  obj fn       = {fn_obj}")
+    print(f"  contraint    = {constr}")
     print(f"  min_box_size = {min_box_size}")
-    print(f"  delta = {delta}")
-    print(f"  err = {err}")
-    print(f"  init_box range: 1 to 10")
+    print(f"  delta        = {delta}")
+    print(f"  err          = {err}")
+    print(f"  splitter     = {splitter}")
+    print(f"  bounder      = {bounder}")
 
     t0 = time.time()
     print("\n=== Running GlobalMinBranchAndBound ===")
-    result1 = global_algo(
-        dim, init_box, fn_obj, vars, ball_constr, min_box_size, delta, err
-    )
+    result1 = global_algo(*args)
     t1 = time.time()
     print(f"Result: {result1}")
     print("Branch-and-bound time:", t1 - t0, "seconds")
@@ -48,9 +72,7 @@ if __name__ == "__main__":
     time.sleep(2)
     t2 = time.time()
     print("\n=== Running ImprovedGlobalMinBranchAndBound ===")
-    result2 = improved_algo(
-        dim, init_box, fn_obj, vars, ball_constr, min_box_size, delta, err
-    )
+    result2 = improved_algo(*args)
     t3 = time.time()
     print(f"Result: {result2}")
     print("Improved Branch-and-bound time:", t3 - t2, "seconds")
@@ -58,9 +80,7 @@ if __name__ == "__main__":
     time.sleep(2)
     t4 = time.time()
     print("\n=== Running BaselineMin ===")
-    result3 = baseline_algo(
-        dim, init_box, fn_obj, vars, ball_constr, min_box_size, delta, err
-    )
+    result3 = baseline_algo(*args)
     t5 = time.time()
     print(f"Result: {result3}")
     print("Baseline dReal Minimize time:", t5 - t4, "seconds")
