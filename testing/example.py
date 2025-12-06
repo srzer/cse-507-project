@@ -1,9 +1,8 @@
 # from box import BoxN, Point
 
 from dreal import And, Formula, Variable
-from box.constraints import build_basic_box
-from box.type import BoxN
-from poly.type import Polynomial, Rational, Term, to_term
+from box import build_basic_box, BoxN
+from objective import Polynomial, Rational, Term, to_term
 
 
 # the input rational function is represented as two lists of terms
