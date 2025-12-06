@@ -1,15 +1,20 @@
 import math
 from dataclasses import dataclass, replace
-from typing import Tuple
+from typing import Iterable, Iterator, Tuple
 from typing_extensions import Self
 
 from dreal import Box
 
+from interval import Bounds
+
 
 # Point = NewType("Point", Tuple[float, ...])
-@dataclass(frozen=True)
+@dataclass(frozen=True, init=False)
 class Point:
     coords: Tuple[float, ...]
+
+    def __init__(self, data: Iterable[float]):
+        object.__setattr__(self, "coords", tuple(data))
 
     def with_value(self, i: int, v: float) -> Self:
         assert i < len(self), f"Point index {i} out of range {len(self)}."
@@ -19,10 +24,10 @@ class Point:
     def __getitem__(self, i: int) -> float:
         return self.coords[i]
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[float]:
         return iter(self.coords)
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.coords)
 
 
@@ -32,23 +37,33 @@ class BoxN:
     min: Point
     max: Point
 
-    # this triggers at some point...?
     def __post_init__(self: Self):
         assert len(self.min) == len(self.max), "Box dimension mismatch."
 
+    @classmethod
+    def from_lists(cls, l1: Iterable[float], l2: Iterable[float]) -> Self:
+        return cls(Point(l1), Point(l2))
+
     @property
-    def dim(self: Self):
+    def dim(self: Self) -> int:
         return len(self.min)
+
+    @property
+    def sides(self: Self) -> list[Bounds]:
+        return [Bounds(lo, hi) for lo, hi in zip(self.min, self.max)]
+
+    # def sides(self: Self) -> list[Tuple[float, float]]:
+    #    return list(zip(self.min, self.max))
 
     @property
     # center point of box
     def center(self: Self) -> Point:
-        return Point(tuple((hi + lo) / 2 for lo, hi in zip(self.min, self.max)))
+        return Point(tuple((hi + lo) / 2 for lo, hi in self.sides))
 
     @property
     # lengths of all sides
     def lengths(self: Self) -> list[float]:
-        return [hi - lo for lo, hi in zip(self.min, self.max)]
+        return [hi - lo for lo, hi in self.sides]
 
     # center of side
     def _side_center(self: Self, i: int):
@@ -68,24 +83,20 @@ class BoxN:
     @property
     # calculate box volume
     def volume(self: Self) -> float:
-        sides = [hi - lo for lo, hi in zip(self.min, self.max)]
-        return math.prod(sides)
+        return math.prod(self.lengths)
 
     # return index of dimension with longest side
     def _max_side_idx(self: Self) -> int:
-        sides = [hi - lo for lo, hi in zip(self.min, self.max)]
-        return sides.index(max(sides))
+        return self.lengths.index(max(self.lengths))
 
     # check if box containts a point
-    def contains(self: Self, point: Point) -> bool:
-        if len(point) != self.dim:
-            raise ValueError(
-                f"Point dimension {len(point)} does not match Box dimension {self.dim}"
-            )
-        return all(lo <= pt <= hi for pt, lo, hi in zip(point, self.min, self.max))
+    def contains(self: Self, p: Point) -> bool:
+        assert len(p) == self.dim, (
+            f"Point dimension {len(p)} does not match Box dimension {self.dim}"
+        )
+        return all(lo <= pt <= hi for pt, lo, hi in zip(p, self.min, self.max))
 
 
+# convert from dReal Box type
 def from_box_model(model: Box) -> BoxN:
-    return BoxN(
-        Point(tuple([p.lb() for p in model])), Point(tuple([p.ub() for p in model]))
-    )
+    return BoxN.from_lists([p.lb() for p in model], [p.ub() for p in model])

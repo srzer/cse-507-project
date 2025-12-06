@@ -20,5 +20,5 @@ def build_constraints(box: BoxN, vars: List[Variable]) -> Formula:
 
 
 # build initial axis-aligned n dimensional box
-def build_basic_box(min, max: float, dim: int):
-    return BoxN(Point(tuple([min] * dim)), Point(tuple([max] * dim)))
+def build_basic_box(min, max: float, dim: int) -> BoxN:
+    return BoxN(Point([min] * dim), Point([max] * dim))
