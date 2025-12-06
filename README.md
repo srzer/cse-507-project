@@ -53,15 +53,11 @@ Box slicing heuristics
 (a) For local dReal installation, please refer to https://github.com/dreal/dreal4.
 
 (b) To use the provided dReal container,
-set the `ROOT_DIR` environment variable using `make`: [^1]
-```bash
-make .env
-```
-
 build the image with
 ```bash
 docker compose build dreal
 ```
+This will take a minute.
 
 Run scripts with the containerized binary via
 ```bash
@@ -85,7 +81,7 @@ The [dReal package](https://pypi.org/project/dreal/) may be installed with
 pip install dreal
 ```
 Note that the package does not provide some bindings e.g. `dreal.Formula` by default.
-These can be provided by installing the required `.pyi` header[^2] to your environment, e.g. in `venv/lib/python3.*/site-packages/dreal/`.
+These can be provided by installing the required `.pyi` header[^1] to your environment, e.g. in `venv/lib/python3.*/site-packages/dreal/`.
 ```bash
 pip install mypy
 stubgen -p dreal -o stubs/
@@ -95,27 +91,4 @@ However, generating the header requires the dReal binary and will not work with 
 For this reason, we have included a copy of the (dReal v4.21.06.2) headers in [dreal-container/_dreal_py.pyi](./dreal-container/_dreal_py.pyi).
 
 
-
-#### Python dReal package
-
-The [dReal package](https://pypi.org/project/dreal/) may be installed with
-```bash
-pip install dreal
-```
-Note that the package does not provide some bindings e.g. `dreal.Formula` by default.
-We can provide these to some 
-```bash
-pip install mypy
-stubgen -p dreal -o stubs/
-```
-
-
-
-```bash
-pip install mypy
-stubgen -p dreal -o stubs/
-```
-
-
-[^1]: Alternatively, without `make`, `cd` into the project root directory and run `echo ROOT_DIR=$(pwd) > .env`.
-[^2]: The `__init__.py` header is already provided.
+[^1]: The `__init__.py` header is already provided.
