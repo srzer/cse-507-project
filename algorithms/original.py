@@ -4,16 +4,16 @@ from typing import Deque, List, Optional
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable
 
 from algorithms import Algorithm
-from algorithms.either import Either, Left, Right
-from box import BoxN
+from box import BoxN, BoxSplit, build_constraints, from_box_model, full_check
+from objective import Rational, ObjectiveBounds, eval_rational, eval_symbolic
 
-# TODO: export these imports in ./box/__init__.py
-from box.constraints import build_constraints
-from box.feasibility import full_check
-from box.split import split_on_longest
-from box.type import from_box_model
-from poly import Rational
-from poly.type import eval_rational, eval_symbolic
+from .either import Either, Left, Right
+from .errors import (
+    CONVERGENCE_TOLERANCE,
+    MAX_STAGNANT_ITERS,
+    ERROR_INFEASIBLE,
+    ERROR_NO_GLOBAL_MIN,
+)
 
 
 class GlobalMinBranchAndBound(Algorithm):
@@ -24,6 +24,8 @@ class GlobalMinBranchAndBound(Algorithm):
         obj: Rational,
         vars: List[Variable],
         constr: Formula,
+        splitter: BoxSplit,
+        bounder: ObjectiveBounds,
         min_box_size: float,
         delta: float,
         err: float,
@@ -55,9 +57,7 @@ class GlobalMinBranchAndBound(Algorithm):
 
         model_box = CheckSatisfiability(init_constraints, delta)
         if model_box is None:
-            return Left(
-                "No feasible point in the initial region under the given constraint."
-            )
+            return Left(ERROR_INFEASIBLE)
 
         # use the model_box interval midpoints for initial feasible point
         # initial lower bound from feasible point
@@ -65,39 +65,52 @@ class GlobalMinBranchAndBound(Algorithm):
 
         queue: Deque[BoxN] = deque()
         queue.append(init_box)
+
         # branch and bound loop
         iteration_count = 0
+        # convergence tracking
+        last_improvement_iter = 0
+
+        # give up after this many iterations without improvement
+
         while queue:
             iteration_count += 1
-            if iteration_count % 100 == 0:
+
+            # convergence check: give up if no improvement for too long
+            if iteration_count - last_improvement_iter > MAX_STAGNANT_ITERS:
                 print(
-                    f"  Iteration {iteration_count}, queue size: {len(queue)}, current lower bound: {lower_bound}"
+                    f"  converged: no improvement for {MAX_STAGNANT_ITERS} iterations"
+                )
+                print(f"  final lower bound: {lower_bound}")
+                break
+
+            # TODO: implement iteration logging
+            # (ideally as monadic state transformer)
+            if iteration_count % 100 == 0:
+                stagnant_count = iteration_count - last_improvement_iter
+                print(
+                    f"  iteration {iteration_count}, queue size: {len(queue)}, current lower bound: {lower_bound}, stagnant: {stagnant_count}"
                 )
 
             box: BoxN = queue.pop()
             box_constraints = build_constraints(box, vars)
 
-            # TODO: implement bernstein bounds
-            # berstein_min = bernstein_bounds_on_box(obj, box)[0]
-            # if berstein_min >= lower_bound - err:
-            #     print("it works!")
-            #     continue
             # 1. Prune by checking if the box can still improve the global bound lower_bound:
             #    Is there any point in this box with constraint satisfied
             #    and f < lower_bound - eps?
             improved_formula = And(box_constraints, constr, fn_expr < lower_bound - err)
             improved_model = CheckSatisfiability(improved_formula, delta)
             if improved_model is None:
-                # No such point ⇒ this box cannot improve B ⇒ discard
-                # print("Pruned a box.")
+                # no such point ⇒ this box cannot improve lower bound ⇒ discard
                 continue
             else:
-                # extract a point from m_improve, and update B
+                # extract a point from improved model, and update lower bound
                 f_at_mids = eval_rational(obj, from_box_model(improved_model).center)
 
-                if f_at_mids < lower_bound:
+                # consider bounds unchanged if diff < convergence tolerance
+                if f_at_mids < lower_bound - CONVERGENCE_TOLERANCE:
                     lower_bound = f_at_mids
-                    # print("Updated global lower bound B =", B)
+                    last_improvement_iter = iteration_count
 
             # 2. If the box is already small enough, do a local Minimize on this box
             if box.max_side_length <= min_box_size:
@@ -118,8 +131,9 @@ class GlobalMinBranchAndBound(Algorithm):
                 mids = [iv.mid() for iv in intervals]
                 f_min_approx = eval_rational(obj, mids)
 
-                if f_min_approx < lower_bound:
+                if f_min_approx < lower_bound - CONVERGENCE_TOLERANCE:
                     lower_bound = f_min_approx
+                    last_improvement_iter = iteration_count
                 #     # print("Updated global lower bound B =", B)
                 continue
 
@@ -133,23 +147,22 @@ class GlobalMinBranchAndBound(Algorithm):
                 # print("Box fully feasible, performing minimize on full box.")
                 sol_box = Minimize(fn_expr, box_constraints, delta)
                 if not sol_box:
-                    return Left("No global min found over given region")
+                    return Left(ERROR_NO_GLOBAL_MIN)
 
                 f_min_approx = eval_rational(obj, from_box_model(sol_box).center)
 
-                if f_min_approx < lower_bound:
+                if f_min_approx < lower_bound - CONVERGENCE_TOLERANCE:
                     lower_bound = f_min_approx
+                    last_improvement_iter = iteration_count
                     # print("Updated global lower bound B =", B)
                 continue
 
             # 3. Otherwise, the box intersects the feasible region but is not
             #    fully inside it, and it may still contain points with f < B - eps.
             #    We split it and continue the search.
-            b1, b2 = split_on_longest(box)
+            b1, b2 = splitter(box, obj)
             queue.append(b1)
             queue.append(b2)
-            # print("Split box into two children.")
 
-        print(f"Algorithm completed after {iteration_count} iterations")
-        print("Final approximate global lower bound B =", lower_bound)
+        print(f"algorithm completed after {iteration_count} iterations")
         return Right(lower_bound)
