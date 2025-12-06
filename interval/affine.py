@@ -1,38 +1,38 @@
 from dataclasses import dataclass
+from typing_extensions import Self
+
+from .type import Bounds
+
+"""
+Basic affine / interval helpers for bounding a rational function
+
+    f(x) = N(x) / D(x)
+
+on an axis-aligned box.
+
+This module is designed to mirror the structure of the Bernstein utilities:
+- we provide a cheap bounding routine affine_bounds_on_box(poly_num, poly_den, box)
+- polynomials are given as monomial dicts: {(e1,...,en): coeff}
+- 'box' is assumed to be a BoxND-like object with .lows and .highs
+"""
 
 
 @dataclass(frozen=True)
-class AffineForm:
+class AffineInterval:
     """
-    Very lightweight 'affine' form:
+    simple 'affine' form:
       x ≈ mid + sum_i coeffs[i] * ε_i,  with ε_i ∈ [-1,1].
     We are not doing full affine propagation here; we only use
     mid/coeffs to get a cheap range and rescale for sub-boxes.
+    We only use it to get a simple range via:
+        [mid - |coeffs[0]|, mid + |coeffs[0]|]
+    No full affine propagation or correlation tracking is done.
     """
 
     mid: float
     coeffs: list[float]
 
-    def range(self):
+    # return interval [min, max] represented by affine form
+    def to_bounds(self: Self) -> Bounds:
         r = sum(abs(c) for c in self.coeffs)
-        return (self.mid - r, self.mid + r)
-
-    def scale_shift(self, a_new, b_new):
-        """
-        Rescale this affine form from its current interval to [a_new, b_new].
-        This is used when we subdivide a box and want to reuse parent AA info.
-        """
-        old_min, old_max = self.range()
-        r_width = old_max - old_min
-        r_new_width = b_new - a_new
-        if r_width == 0:
-            # degenerate: collapse to midpoint of new interval
-            alpha = 0.0
-            beta = (a_new + b_new) * 0.5
-        else:
-            alpha = r_new_width / r_width
-            beta = a_new - alpha * old_min
-
-        new_coeffs = [c * alpha for c in self.coeffs]
-        new_mid = self.mid * alpha + beta
-        return AffineForm(new_mid, new_coeffs)
+        return Bounds(self.mid - r, self.mid + r)
