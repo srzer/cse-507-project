@@ -10,6 +10,8 @@ from algorithms import (
     BaselineMin,
 )
 
+# TODO: make use of asserts vs value errors consistent with whether function is exposed to client
+
 if __name__ == "__main__":
     global_algo = GlobalMinBranchAndBound()
     improved_algo = ImprovedGlobalMinBranchAndBound()
