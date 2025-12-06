@@ -13,8 +13,8 @@ from interval import Bounds
 class Point:
     coords: Tuple[float, ...]
 
-    def __init__(self, data: Iterable[float]):
-        object.__setattr__(self, "coords", tuple(data))
+    def __init__(self, coords: Iterable[float]):
+        object.__setattr__(self, "coords", tuple(coords))
 
     def with_value(self, i: int, v: float) -> Self:
         assert i < len(self), f"Point index {i} out of range {len(self)}."
@@ -99,4 +99,5 @@ class BoxN:
 
 # convert from dReal Box type
 def from_box_model(model: Box) -> BoxN:
-    return BoxN.from_lists([p.lb() for p in model], [p.ub() for p in model])
+    ivs = model.values()
+    return BoxN.from_lists([iv.lb() for iv in ivs], [iv.ub() for iv in ivs])
