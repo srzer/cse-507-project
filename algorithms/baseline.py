@@ -9,7 +9,7 @@ from poly import Rational
 # FIXME: export the dot imports in the respective __init__ files
 from box.constraints import build_constraints
 from box.type import from_box_model
-from poly.type import eval, eval_symbolic
+from poly.type import eval_rational, eval_symbolic
 from testing.example import ball_constraint_example
 
 
@@ -49,7 +49,7 @@ class BaselineMin(Algorithm):
         if not sol_box:
             return None
 
-        min_approx = eval(obj, from_box_model(sol_box).center)
+        min_approx = eval_rational(obj, from_box_model(sol_box).center)
 
         print("[baseline] approximate global minimum f ≈", min_approx)
         return min_approx

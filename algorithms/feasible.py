@@ -1,6 +1,6 @@
 from collections import deque
 
-from typing import Optional, List
+from typing import Optional, List, Deque
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable, Interval
 
 from algorithms import Algorithm
@@ -9,8 +9,10 @@ from box import BoxN, Point
 # TODO: export these imports in ./box/__init__.py
 from box.constraints import build_constraints
 from box.feasibility import full_check
+from box.split import split_on_longest
 from poly import Rational
-from poly.type import eval, eval_symbolic
+from poly.type import eval_rational, eval_symbolic
+from poly.bernstein import bernstein_bounds
 
 # FIXME: why do we have separate algorithm implementations?
 # shouldn't we just have all the heurstic pieces (or other components)
@@ -19,11 +21,8 @@ from poly.type import eval, eval_symbolic
 
 
 class FeasibleMinBranchAndBound(Algorithm):
-    # TODO: fix impl of initial_lower_bound for Feasible class
-    # i don't think that we pass in an initial elsewhere, so that's why
-    initial_lower_bound: float = 0.0
-    # def initial_lower_bound(self) -> float:
-    #     return 0.0
+    def __init__(self, initial_lower_bound: float = float('inf')):
+        self.initial_lower_bound = initial_lower_bound
 
     def _run(
         self,
@@ -36,17 +35,16 @@ class FeasibleMinBranchAndBound(Algorithm):
         delta: float,
         err: float,
     ) -> Optional[float]:
-        fn_expr = eval_symbolic(obj, vars)
+        # fn_expr = eval_symbolic(obj, vars)
         lower_bound = self.initial_lower_bound
 
-        queue = deque()
+        queue: Deque[BoxN] = deque()
         queue.append(init_box)
 
-        while queue():
-            box = queue.pop()
+        while queue:
+            box: BoxN = queue.pop()
 
-            # TODO: implement bernstein!
-            berstein_min = bernstein_bounds_on_box(poly_num, poly_den, box)[0]
+            berstein_min, _ = bernstein_bounds(obj, box)
 
             if berstein_min >= lower_bound - err:
                 continue
@@ -66,13 +64,13 @@ class FeasibleMinBranchAndBound(Algorithm):
             #         # print("Updated global lower bound B =", B)
 
             # 2. If the box is already small enough, pick the center value
-            if box.max_side <= min_box_size:
-                f_at_mids = eval(obj, box.center)
+            if box.max_side_length <= min_box_size:
+                f_at_mids = eval_rational(obj, box.center)
                 if f_at_mids < lower_bound:
                     lower_bound = f_at_mids
                 continue
 
-            b1, b2 = box.split_on_longest
+            b1, b2 = split_on_longest(box)
             queue.append(b1)
             queue.append(b2)
 

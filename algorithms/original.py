@@ -1,17 +1,18 @@
 from collections import deque
 
-from typing import Optional, List
+from typing import Optional, List, Deque
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable
 
 from algorithms import Algorithm
 from box import BoxN
+from poly import Rational
 
 # TODO: export these imports in ./box/__init__.py
 from box.constraints import build_constraints
 from box.feasibility import full_check
 from box.type import from_box_model
-from poly import Rational
-from poly.type import eval, eval_symbolic
+from box.split import split_on_longest
+from poly.type import eval_rational, eval_symbolic
 
 
 class GlobalMinBranchAndBound(Algorithm):
@@ -54,20 +55,32 @@ class GlobalMinBranchAndBound(Algorithm):
         init_constraints = And(build_constraints(init_box, vars), constr)
 
         model_box = CheckSatisfiability(init_constraints, delta)
+        print("model box: ", model_box)
         if model_box is None:
             print("No feasible point in the initial region under the given constraint.")
             return None
 
         # use the model_box interval midpoints for initial feasible point
         # initial lower bound from feasible point
-        lower_bound = eval(obj, from_box_model(model_box).center)
+        print("obj: ", obj)
+        print("model box: ", model_box)
+        print("converted box: ", from_box_model(model_box))
+        print("model center: ", from_box_model(model_box).center)
+        lower_bound = eval_rational(obj, from_box_model(model_box).center)
         print("initial feasible point:  ", lower_bound)
 
-        queue = deque()
+        queue: Deque[BoxN] = deque()
         queue.append(init_box)
         # branch and bound loop
+        iteration_count = 0
         while queue:
-            box = queue.pop()
+            iteration_count += 1
+            if iteration_count % 100 == 0:
+                print(
+                    f"  Iteration {iteration_count}, queue size: {len(queue)}, current lower bound: {lower_bound}"
+                )
+
+            box: BoxN = queue.pop()
             box_constraints = build_constraints(box, vars)
 
             # TODO: implement bernstein bounds
@@ -86,14 +99,14 @@ class GlobalMinBranchAndBound(Algorithm):
                 continue
             else:
                 # extract a point from m_improve, and update B
-                f_at_mids = eval(obj, from_box_model(improved_model).center)
+                f_at_mids = eval_rational(obj, from_box_model(improved_model).center)
 
                 if f_at_mids < lower_bound:
                     lower_bound = f_at_mids
                     # print("Updated global lower bound B =", B)
 
             # 2. If the box is already small enough, do a local Minimize on this box
-            if box.max_side <= min_box_size:
+            if box.max_side_length <= min_box_size:
                 continue
                 # NOTE: 3 ways;
                 # 1) directly skip
@@ -109,7 +122,7 @@ class GlobalMinBranchAndBound(Algorithm):
                 sol_box = Minimize(fn_expr, local_constraints, delta)
                 intervals = [sol_box[xi] for xi in vars]
                 mids = [iv.mid() for iv in intervals]
-                f_min_approx = eval(obj, mids)
+                f_min_approx = eval_rational(obj, mids)
 
                 if f_min_approx < lower_bound:
                     lower_bound = f_min_approx
@@ -128,7 +141,7 @@ class GlobalMinBranchAndBound(Algorithm):
                 if not sol_box:
                     return None
 
-                f_min_approx = eval(obj, from_box_model(sol_box).center)
+                f_min_approx = eval_rational(obj, from_box_model(sol_box).center)
 
                 if f_min_approx < lower_bound:
                     lower_bound = f_min_approx
@@ -138,10 +151,11 @@ class GlobalMinBranchAndBound(Algorithm):
             # 3. Otherwise, the box intersects the feasible region but is not
             #    fully inside it, and it may still contain points with f < B - eps.
             #    We split it and continue the search.
-            b1, b2 = box.split_on_longest()
+            b1, b2 = split_on_longest(box)
             queue.append(b1)
             queue.append(b2)
             # print("Split box into two children.")
 
+        print(f"Algorithm completed after {iteration_count} iterations")
         print("Final approximate global lower bound B =", lower_bound)
         return lower_bound
