@@ -1,10 +1,8 @@
 from collections import deque
+from typing import Deque, List, Optional
 
-from typing import Optional, List, Deque
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable
 
-from algorithms import Algorithm
-from algorithms.feasible import FeasibleMinBranchAndBound
 from box import BoxN
 from poly import Rational
 
@@ -15,6 +13,10 @@ from box.split import split_on_longest
 from box.type import from_box_model
 from poly.bernstein import bernstein_bounds
 from poly.type import eval_rational, eval_symbolic
+
+from .either import Either, Left, Right
+from .feasible import FeasibleMinBranchAndBound
+from .type import Algorithm
 
 
 class ImprovedGlobalMinBranchAndBound(Algorithm):
@@ -28,13 +30,13 @@ class ImprovedGlobalMinBranchAndBound(Algorithm):
         min_box_size: float,
         delta: float,
         err: float,
-    ) -> Optional[float]:
+    ) -> Either[str, float]:
         fn_expr = eval_symbolic(obj, vars)
         init_constr = And(build_constraints(init_box, vars), constr)
 
         model = CheckSatisfiability(init_constr, delta)
         if not model:
-            return None
+            return Left("Model is not satisfiable with given constraints")
 
         lower_bound = eval_rational(obj, from_box_model(model).center)
 
@@ -76,11 +78,17 @@ class ImprovedGlobalMinBranchAndBound(Algorithm):
                 temp_lower_bound = FeasibleMinBranchAndBound(lower_bound)(
                     dim, box, obj, vars, init_constr, min_box_size, delta, err
                 )
-                if temp_lower_bound and temp_lower_bound < lower_bound:
-                    print(
-                        "new temp lower bound found with feasible: ", temp_lower_bound
-                    )
-                    lower_bound = temp_lower_bound
+                # TODO use a map here instead?
+                match temp_lower_bound:
+                    case Left(e):
+                        return Left(e)
+                    case Right(v):
+                        if v < lower_bound:
+                            print(
+                                "new temp lower bound found with feasible: ",
+                                temp_lower_bound,
+                            )
+                            lower_bound = v
                 continue
 
             b1, b2 = split_on_longest(box)
@@ -88,4 +96,4 @@ class ImprovedGlobalMinBranchAndBound(Algorithm):
             queue.append(b2)
 
         # print("Final approximate global lower bound B =", B)
-        return lower_bound
+        return Right(lower_bound)

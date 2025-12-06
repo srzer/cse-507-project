@@ -1,17 +1,18 @@
 from collections import deque
+from typing import Deque, List, Optional
 
-from typing import Optional, List, Deque
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable
 
 from algorithms import Algorithm
+from algorithms.either import Either, Left, Right
 from box import BoxN
-from poly import Rational
 
 # TODO: export these imports in ./box/__init__.py
 from box.constraints import build_constraints
 from box.feasibility import full_check
-from box.type import from_box_model
 from box.split import split_on_longest
+from box.type import from_box_model
+from poly import Rational
 from poly.type import eval_rational, eval_symbolic
 
 
@@ -26,7 +27,7 @@ class GlobalMinBranchAndBound(Algorithm):
         min_box_size: float,
         delta: float,
         err: float,
-    ) -> Optional[float]:
+    ) -> Either[str, float]:
         """
         Global minimization of f(x1,...,xn) under a general constraint using
         a branch-and-bound style algorithm with dReal.
@@ -48,26 +49,19 @@ class GlobalMinBranchAndBound(Algorithm):
 
         # symbolic constraint and objective
         fn_expr = eval_symbolic(obj, vars)
-        print("objective function: ")
-        print(fn_expr)
 
         # feasibility check & initial lower bound
         init_constraints = And(build_constraints(init_box, vars), constr)
 
         model_box = CheckSatisfiability(init_constraints, delta)
-        print("model box: ", model_box)
         if model_box is None:
-            print("No feasible point in the initial region under the given constraint.")
-            return None
+            return Left(
+                "No feasible point in the initial region under the given constraint."
+            )
 
         # use the model_box interval midpoints for initial feasible point
         # initial lower bound from feasible point
-        print("obj: ", obj)
-        print("model box: ", model_box)
-        print("converted box: ", from_box_model(model_box))
-        print("model center: ", from_box_model(model_box).center)
         lower_bound = eval_rational(obj, from_box_model(model_box).center)
-        print("initial feasible point:  ", lower_bound)
 
         queue: Deque[BoxN] = deque()
         queue.append(init_box)
@@ -139,7 +133,7 @@ class GlobalMinBranchAndBound(Algorithm):
                 # print("Box fully feasible, performing minimize on full box.")
                 sol_box = Minimize(fn_expr, box_constraints, delta)
                 if not sol_box:
-                    return None
+                    return Left("No global min found over given region")
 
                 f_min_approx = eval_rational(obj, from_box_model(sol_box).center)
 
@@ -158,4 +152,4 @@ class GlobalMinBranchAndBound(Algorithm):
 
         print(f"Algorithm completed after {iteration_count} iterations")
         print("Final approximate global lower bound B =", lower_bound)
-        return lower_bound
+        return Right(lower_bound)

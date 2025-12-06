@@ -1,10 +1,12 @@
 from abc import ABC, abstractmethod
-from typing import Optional, List
+from typing import List, Optional
 
 from dreal import Formula, Variable
 
 from box import BoxN
 from poly import Rational
+
+from .either import Either
 
 
 # NOTE: using abstract base class instead of protocol for explicit typing enforcement
@@ -25,7 +27,7 @@ class Algorithm(ABC):
         min_box_size: float = 0.1,
         delta: float = 1e-3,
         err: float = 1e-4,
-    ) -> Optional[float]:
+    ) -> Either[str, float]:
         # TODO: complete dimensionality checks
         # we want to assert that the following have the same dimensionality:
         # 1. max(# diff vars in obj fn)
@@ -45,7 +47,7 @@ class Algorithm(ABC):
         vars = vars or self._default_variables(dim)
         constr = constr or self._default_constraint()
 
-        self._run(dim, init_box, obj, vars, constr, min_box_size, delta, err)
+        return self._run(dim, init_box, obj, vars, constr, min_box_size, delta, err)
 
     @abstractmethod
     def _run(
@@ -58,4 +60,4 @@ class Algorithm(ABC):
         min_box_size: float,
         delta: float,
         err: float,
-    ) -> Optional[float]: ...
+    ) -> Either[str, float]: ...

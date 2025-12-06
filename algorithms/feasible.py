@@ -1,17 +1,16 @@
 from collections import deque
 
-from typing import Optional, List, Deque
-from dreal import And, CheckSatisfiability, Formula, Minimize, Variable, Interval
+from typing import List, Deque
+from dreal import Formula, Variable
 
-from algorithms import Algorithm
-from box import BoxN, Point
+from .type import Algorithm
+from .either import Either, Right, Left
+from box import BoxN
 
 # TODO: export these imports in ./box/__init__.py
-from box.constraints import build_constraints
-from box.feasibility import full_check
 from box.split import split_on_longest
 from poly import Rational
-from poly.type import eval_rational, eval_symbolic
+from poly.type import eval_rational
 from poly.bernstein import bernstein_bounds
 
 # FIXME: why do we have separate algorithm implementations?
@@ -21,7 +20,7 @@ from poly.bernstein import bernstein_bounds
 
 
 class FeasibleMinBranchAndBound(Algorithm):
-    def __init__(self, initial_lower_bound: float = float('inf')):
+    def __init__(self, initial_lower_bound: float = float("inf")):
         self.initial_lower_bound = initial_lower_bound
 
     def _run(
@@ -34,7 +33,7 @@ class FeasibleMinBranchAndBound(Algorithm):
         min_box_size: float,
         delta: float,
         err: float,
-    ) -> Optional[float]:
+    ) -> Either[str, float]:
         # fn_expr = eval_symbolic(obj, vars)
         lower_bound = self.initial_lower_bound
 
@@ -74,4 +73,4 @@ class FeasibleMinBranchAndBound(Algorithm):
             queue.append(b1)
             queue.append(b2)
 
-        return lower_bound
+        return Right(lower_bound)
