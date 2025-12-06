@@ -1,17 +1,13 @@
 from collections import deque
+from typing import Deque, List
 
-from typing import List, Deque
 from dreal import Formula, Variable
 
-from .type import Algorithm
-from .either import Either, Right, Left
-from box import BoxN
+from box import BoxN, BoxSplit, Point
+from objective import ObjectiveBounds, Rational, eval_rational
 
-# TODO: export these imports in ./box/__init__.py
-from box.split import split_on_longest
-from poly import Rational
-from poly.type import eval_rational
-from poly.bernstein import bernstein_bounds
+from .either import Either, Left, Right
+from .type import Algorithm
 
 # FIXME: why do we have separate algorithm implementations?
 # shouldn't we just have all the heurstic pieces (or other components)
@@ -30,6 +26,8 @@ class FeasibleMinBranchAndBound(Algorithm):
         obj: Rational,
         vars: List[Variable],
         constr: Formula,
+        splitter: BoxSplit,
+        bounder: ObjectiveBounds,
         min_box_size: float,
         delta: float,
         err: float,
@@ -43,34 +41,49 @@ class FeasibleMinBranchAndBound(Algorithm):
         while queue:
             box: BoxN = queue.pop()
 
-            berstein_min, _ = bernstein_bounds(obj, box)
+            bounded_min, _ = bounder(obj, box)
 
-            if berstein_min >= lower_bound - err:
+            if bounded_min >= lower_bound - err:
                 continue
-            # # 1. Prune by checking if the box can still improve the global bound B:
-            # #    Is there any point in this box with constraint satisfied and f < B - eps?
-            # improve_formula = And(box_constraints, f_expr < B - eps)
-            # m_improve = CheckSatisfiability(improve_formula, delta_dreal)
-            # if m_improve is None:
-            #     continue
-            # else:
-            #     # extract a point from m_improve, and update B
-            #     intervals = [m_improve[xi] for xi in xs]
-            #     mids = [0.5 * (iv.lb() + iv.ub()) for iv in intervals]
-            #     f_at_mids = rational_value_numeric(poly_num, poly_den, mids)
-            #     if f_at_mids < B:
-            #         B = f_at_mids
-            #         # print("Updated global lower bound B =", B)
+
+            # NOTE: corners scale exponentially with dimension
+            # TODO: implement heuristic to prevent over-execution
+            for corner in generate_corners(box):
+                obj_at_corner = eval_rational(obj, corner)
+                if obj_at_corner < lower_bound:
+                    lower_bound = obj_at_corner
 
             # 2. If the box is already small enough, pick the center value
             if box.max_side_length <= min_box_size:
-                f_at_mids = eval_rational(obj, box.center)
-                if f_at_mids < lower_bound:
-                    lower_bound = f_at_mids
+                obj_at_center = eval_rational(obj, box.center)
+                if obj_at_center < lower_bound:
+                    lower_bound = obj_at_center
                 continue
 
-            b1, b2 = split_on_longest(box)
+            b1, b2 = splitter(box, obj)
             queue.append(b1)
             queue.append(b2)
 
         return Right(lower_bound)
+
+
+# generate all 2^n corner points of a box in n dimensions
+def generate_corners(box: BoxN) -> list[Point]:
+    corners = []
+
+    def _generate_recursive(idx: int, current: list[float]) -> None:
+        if idx == box.dim:
+            corners.append(Point(tuple(current)))
+            return
+
+        # try both low and high values for this dimension
+        current.append(box.min[idx])
+        _generate_recursive(idx + 1, current)
+        current.pop()
+
+        current.append(box.max[idx])
+        _generate_recursive(idx + 1, current)
+        current.pop()
+
+    _generate_recursive(0, [])
+    return corners
