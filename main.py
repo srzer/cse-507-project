@@ -29,17 +29,38 @@ if __name__ == "__main__":
     vars = global_algo._default_variables(dim)
     ball_constr = ball_constraint_example(vars)
 
+    print(f"Running with parameters:")
+    print(f"  dim = {dim}")
+    print(f"  min_box_size = {min_box_size}")
+    print(f"  delta = {delta}")
+    print(f"  err = {err}")
+    print(f"  init_box range: 1 to 10")
+
     t0 = time.time()
-    global_algo(dim, init_box, fn_obj, vars, ball_constr, min_box_size, delta, err)
+    print("\n=== Running GlobalMinBranchAndBound ===")
+    result1 = global_algo(
+        dim, init_box, fn_obj, vars, ball_constr, min_box_size, delta, err
+    )
     t1 = time.time()
+    print(f"Result: {result1}")
     print("Branch-and-bound time:", t1 - t0, "seconds")
+
     time.sleep(2)
     t2 = time.time()
-    improved_algo(dim, init_box, fn_obj, vars, ball_constr, min_box_size, delta, err)
+    print("\n=== Running ImprovedGlobalMinBranchAndBound ===")
+    result2 = improved_algo(
+        dim, init_box, fn_obj, vars, ball_constr, min_box_size, delta, err
+    )
     t3 = time.time()
+    print(f"Result: {result2}")
     print("Improved Branch-and-bound time:", t3 - t2, "seconds")
+
     time.sleep(2)
     t4 = time.time()
-    baseline_algo(dim, init_box, fn_obj, vars, ball_constr, min_box_size, delta, err)
+    print("\n=== Running BaselineMin ===")
+    result3 = baseline_algo(
+        dim, init_box, fn_obj, vars, ball_constr, min_box_size, delta, err
+    )
     t5 = time.time()
+    print(f"Result: {result3}")
     print("Baseline dReal Minimize time:", t5 - t4, "seconds")
