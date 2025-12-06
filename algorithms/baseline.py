@@ -3,15 +3,11 @@ from typing import List
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable
 
 from algorithms import Algorithm
+from box import BoxN, BoxSplit, build_constraints, from_box_model
+from objective import Rational, ObjectiveBounds, eval_rational, eval_symbolic
 
-# FIXME: export the dot imports in the respective __init__ files
-from algorithms.either import Either, Left, Right
-from box import BoxN
-from box.constraints import build_constraints
-from box.type import from_box_model
-from poly import Rational
-from poly.type import eval_rational, eval_symbolic
-from testing.example import ball_constraint_example
+from .either import Either, Left, Right
+from .errors import ERROR_INFEASIBLE, ERROR_NO_GLOBAL_MIN
 
 
 # NOTE: doesn't take in some of the params given by iface
@@ -24,6 +20,8 @@ class BaselineMin(Algorithm):
         obj: Rational,
         vars: List[Variable],
         constr: Formula,
+        splitter: BoxSplit,
+        bounder: ObjectiveBounds,
         min_box_size: float,
         delta: float,
         err: float,
@@ -34,23 +32,18 @@ class BaselineMin(Algorithm):
         without any branch-and-bound splitting or pruning.
         """
         fn_expr = eval_symbolic(obj, vars)
-        constraint = ball_constraint_example(vars)
 
-        region_constraints = And(build_constraints(init_box, vars), constraint)
+        region_constraints = And(build_constraints(init_box, vars), constr)
 
         # check feasibility
         model = CheckSatisfiability(region_constraints, delta)
         if model is None:
-            return Left(
-                "No feasible point in the inital box under the given constraint"
-            )
+            return Left(ERROR_INFEASIBLE)
 
-        # perform global Minimize over the region
+        # perform global dReal minimize over the region
         sol_box = Minimize(fn_expr, region_constraints, delta)
         if not sol_box:
-            return Left("No global min found over given region")
+            return Left(ERROR_NO_GLOBAL_MIN)
 
-        min_approx = eval_rational(obj, from_box_model(sol_box).center)
-
-        # print("[baseline] approximate global minimum f ≈", min_approx)
-        return Right(min_approx)
+        # return function evaluated at solution box center
+        return Right(eval_rational(obj, from_box_model(sol_box).center))
