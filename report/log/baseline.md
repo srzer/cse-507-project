@@ -209,3 +209,6 @@ Improved Branch-and-bound time: 1.2103965282440186 seconds
 === Running BaselineMin ===
 Result: Right(value=0.42094964010138736)
 Baseline dReal Minimize time: 8.513031005859375 seconds
+
+// affine + gradient seems to not work
+// but affine by itself seems to do pretty good!
