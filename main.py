@@ -7,6 +7,7 @@ from objective import AffineBounds, BernsteinBounds
 from returns.result import Success, Failure
 
 from testing.example import make_example_problem_1, make_example_problem_2
+from testing.numeric_optimization import run_numeric_tests
 from testing.standard_tests import all_standard_tests
 from algorithms import (
     GlobalMinBranchAndBound,
@@ -42,13 +43,18 @@ SKIP_LIST = [
 ]
 
 if __name__ == "__main__":
+    run_numeric_tests()
+
     problems = [
         # make_example_problem_1(PROBLEM_DIMENSION),
         # make_example_problem_2(PROBLEM_DIMENSION),
     ]
     problems.extend(all_standard_tests(PROBLEM_DIMENSION))
 
-    bnb_algorithms = [GlobalMinBranchAndBound(), ImprovedGlobalMinBranchAndBound()]
+    bnb_algorithms = [
+        # GlobalMinBranchAndBound(),
+        ImprovedGlobalMinBranchAndBound()
+    ]
     splitters = [SplitLongestSide(), SplitGradient()]
     bounders = [AffineBounds(), BernsteinBounds()]
 
@@ -135,5 +141,5 @@ if __name__ == "__main__":
 
     print("\noverall comparison summary")
     print(results_to_markdown(all_results))
-    save_results_to_csv(all_results, "comparison_summary.csv")
+    save_results_to_csv(all_results, "./report/log/comparison_summary.csv")
     print("\nsummary saved to comparison_summary.csv")
