@@ -13,13 +13,13 @@
 */
 
 #let abstract = [
-  this is a test of our abstract
-
-  source code at https://github.com/srzer/cse-507-project
+  Optimizing positive rational functions $RR^n -> RR$ with polynomial inequality constraints using interval arithmetic,
+  affine interval representations, Bernstein polynomial form, and branch-and-bound methods.
+  Our source code is available at https://github.com/srzer/cse-507-project
 ]
 
 #show: elsearticle.with(
-  title: "test",
+  title: "CSE 507 Project: Hybrid Numerical & SMT Optimization",
   authors: (
     // a lipson, Jaedon Rich, Ruizhe Shi, Evan Wang
     (
@@ -32,7 +32,7 @@
   ),
   // journal: "UW CSE 507",
   abstract: abstract,
-  keywords: ("interval arithmetic", "SMT"),
+  keywords: ("interval arithmetic", "SMT", "Bernstein", "affine interval from", "dReal"),
   format: "3p",
   // line-numbering: true,
 )
