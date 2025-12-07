@@ -54,11 +54,10 @@ Some complex problem configurations, particularly those involving intricate cons
 
 This is a fundamental limitation of using an external solver without a direct timeout API. Due to the way Python interacts with the `dreal` C++ library (specifically, an issue with serializing `dreal` objects for inter-process communication), a robust, low-level timeout on individual `dreal` calls is not feasible in the current architecture.
 
-To manage this, a "skip list" has been implemented in `main.py`:
+To manage this, a skip list has been implemented in `main.py`:
 
 ```python
-# In main.py
-SKIP_CONFIGS = [
+SKIP_LIST = [
     # ... configurations known to hang are listed here ...
 ]
 ```
