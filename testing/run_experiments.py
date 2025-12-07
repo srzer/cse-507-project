@@ -1,4 +1,10 @@
-from testing.test_suite import (
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+
+from test_suite import (
     run_test_suite,
     test_sanity_poly,
     test_sanity_rational,
