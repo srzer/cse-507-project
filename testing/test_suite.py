@@ -9,8 +9,7 @@ from dreal import Variable, And, Or
 from scipy.optimize import shgo, dual_annealing, differential_evolution
 
 from box import BoxN, Point
-from poly import Rational, Polynomial, PolyBuilder, make_vars
-from poly.type import to_term
+from objective import Rational, PolyBuilder, make_vars
 
 # UPDATED IMPORT: Added feasible_min_branch_and_bound
 from ours import (
