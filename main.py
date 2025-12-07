@@ -14,7 +14,7 @@ from algorithms import (
     BaselineMin,
 )
 from algorithms.log import save_logs_to_csv
-from testing.reporting import results_to_markdown, save_results_to_csv
+from testing.logging_table import results_to_markdown, save_results_to_csv
 
 # main config
 GENERATE_DETAILED_LOGS = False
@@ -100,11 +100,7 @@ if __name__ == "__main__":
 
             t_start = time.time()
             result = algo(
-                dim=problem.dim,
-                init_box=problem.initial_box,
-                obj=problem.objective,
-                vars=problem.variables,
-                constr=problem.constraints,
+                problem=problem,
                 splitter=splitter,
                 bounder=bounder,
             )

@@ -16,6 +16,7 @@ from objective import (
     eval_rational,
     eval_symbolic,
 )
+from testing.test_type import Problem
 
 from .errors import CONVERGENCE_TOLERANCE, MAX_STAGNANT_ITERS, ERROR_INFEASIBLE
 from .feasible import FeasibleMinBranchAndBound
@@ -143,11 +144,14 @@ class ImprovedGlobalMinBranchAndBound(Algorithm):
             # instead of just the full check
             if FullFeasible()(box, vars, constr, delta):
                 result = FeasibleMinBranchAndBound(lower_bound)(
-                    dim,
-                    box,
-                    obj,
-                    vars,
-                    init_constr,
+                    Problem(
+                        "",
+                        dim,
+                        obj,
+                        init_constr,
+                        box,
+                        vars,
+                    ),
                     splitter,
                     bounder,
                     min_box_size,

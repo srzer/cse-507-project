@@ -7,6 +7,7 @@ from typing_extensions import Self
 
 from box import BoxN, BoxSplit, SplitLongestSide
 from objective import Rational, ObjectiveBounds, AffineBounds
+from testing.test_type import Problem
 
 from .log import LogEntry
 
@@ -27,11 +28,12 @@ class Algorithm(ABC):
 
     def __call__(
         self: Self,
-        dim: int,  # explicity keep track of problem dimensionality
-        init_box: BoxN,
-        obj: Rational,
-        vars: Optional[List[Variable]] = None,
-        constr: Optional[Formula] = None,
+        # dim: int,  # explicity keep track of problem dimensionality
+        # init_box: BoxN,
+        # obj: Rational,
+        # vars: Optional[List[Variable]] = None,
+        # constr: Optional[Formula] = None,
+        problem: Problem,
         splitter: Optional[BoxSplit] = None,
         bounder: Optional[ObjectiveBounds] = None,
         min_box_size: float = 0.1,
@@ -44,6 +46,11 @@ class Algorithm(ABC):
         # 2. initial box dimension
         # 3. max(# diff vars in constraint formula)
         # 4. # vars in variable list
+        dim = problem.dim
+        init_box = problem.initial_box
+        obj = problem.objective
+        vars = problem.variables
+        constr = problem.constraints
 
         # NOTE: would like to push these checks to type safety level,
         # but this will have to work for now
