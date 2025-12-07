@@ -31,6 +31,11 @@ class SplitGradient(BoxSplit):
         return _split_by_gradient(obj, box)
 
 
+class SplitRandom(BoxSplit):
+    def _run(self: Self, box: BoxN, obj: Rational) -> Tuple[BoxN, BoxN]:
+        return _bisect_random(box)
+
+
 # bisect on random dimension
 def _bisect_random(box: BoxN) -> Tuple[BoxN, BoxN]: ...
 
