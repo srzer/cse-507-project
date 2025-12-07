@@ -1,8 +1,22 @@
 #import "@preview/elsearticle:1.1.0": *
 
-#let abstract = "
-this is a test of our abstract
-"
+/*
+# The Research Catechism
+1. Problem
+ What is the problem? What opportunities does addressing it create?
+2. Insight
+ What is the key insight? What conceptual contributions does our solution provide?
+3. Claims
+ How do we know the key insight is good? What measurable claims can we make about the solution?
+4. Evidence
+ What evidence do we have to back up the claims?
+*/
+
+#let abstract = [
+  this is a test of our abstract
+
+  source code at https://github.com/srzer/cse-507-project
+]
 
 #show: elsearticle.with(
   title: "test",
@@ -22,6 +36,7 @@ this is a test of our abstract
   format: "3p",
   // line-numbering: true,
 )
+
 
 /*
 The purpose of the final report is to present your
@@ -80,6 +95,9 @@ and a one-paragraph description (if applicable) of any topics that would have be
 
 // = References (automatically included in template)
 #bibliography("refs.bib")
+
+
+
 
 /* template reference
 
