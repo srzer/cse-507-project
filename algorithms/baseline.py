@@ -1,13 +1,14 @@
-from typing import List
+from typing import List, Tuple
 
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable
+from returns.result import Result, Failure, Success
 
 from algorithms import Algorithm
 from box import BoxN, BoxSplit, from_box_model
 from objective import Rational, ObjectiveBounds, eval_rational, eval_symbolic
 
-from .either import Either, Left, Right
 from .errors import ERROR_INFEASIBLE, ERROR_NO_GLOBAL_MIN
+from .log import LogEntry
 
 
 # NOTE: doesn't take in some of the params given by iface
@@ -25,7 +26,7 @@ class BaselineMin(Algorithm):
         min_box_size: float,
         delta: float,
         err: float,
-    ) -> Either[str, float]:
+    ) -> Result[Tuple[float, List[LogEntry]], str]:
         """
         Directly call dReal.Minimize on the whole region
             initial_box ∧ f_constraint
@@ -38,12 +39,12 @@ class BaselineMin(Algorithm):
         # check feasibility
         model = CheckSatisfiability(region_constraints, delta)
         if model is None:
-            return Left(ERROR_INFEASIBLE)
+            return Failure(ERROR_INFEASIBLE)
 
         # perform global dReal minimize over the region
         sol_box = Minimize(fn_expr, region_constraints, delta)
         if not sol_box:
-            return Left(ERROR_NO_GLOBAL_MIN)
+            return Failure(ERROR_NO_GLOBAL_MIN)
 
         # return function evaluated at solution box center
-        return Right(eval_rational(obj, from_box_model(sol_box).center))
+        return Success((eval_rational(obj, from_box_model(sol_box).center), []))

@@ -1,20 +1,20 @@
 from collections import deque
-from typing import Deque, List, Optional
+from typing import Deque, List, Optional, Tuple
 
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable
+from returns.result import Result, Failure, Success
 
 from algorithms import Algorithm
 from box import BoxN, BoxSplit, FullFeasible, from_box_model
-from box.feasibility.check import FullFeasible
 from objective import Rational, ObjectiveBounds, eval_rational, eval_symbolic
 
-from .either import Either, Left, Right
 from .errors import (
     CONVERGENCE_TOLERANCE,
     MAX_STAGNANT_ITERS,
     ERROR_INFEASIBLE,
     ERROR_NO_GLOBAL_MIN,
 )
+from .log import LogEntry
 
 
 class GlobalMinBranchAndBound(Algorithm):
@@ -30,7 +30,7 @@ class GlobalMinBranchAndBound(Algorithm):
         min_box_size: float,
         delta: float,
         err: float,
-    ) -> Either[str, float]:
+    ) -> Result[Tuple[float, List[LogEntry]], str]:
         """
         Global minimization of f(x1,...,xn) under a general constraint using
         a branch-and-bound style algorithm with dReal.
@@ -49,6 +49,7 @@ class GlobalMinBranchAndBound(Algorithm):
             Pruning margin: we discard boxes that cannot have f < B - err,
             where B is the current global lower bound.
         """
+        logs: List[LogEntry] = []
 
         # symbolic constraint and objective
         fn_expr = eval_symbolic(obj, vars)
@@ -58,7 +59,7 @@ class GlobalMinBranchAndBound(Algorithm):
 
         model_box = CheckSatisfiability(init_constraints, delta)
         if model_box is None:
-            return Left(ERROR_INFEASIBLE)
+            return Failure(ERROR_INFEASIBLE)
 
         # use the model_box interval midpoints for initial feasible point
         # initial lower bound from feasible point
@@ -79,19 +80,17 @@ class GlobalMinBranchAndBound(Algorithm):
 
             # convergence check: give up if no improvement for too long
             if iteration_count - last_improvement_iter > MAX_STAGNANT_ITERS:
-                print(
-                    f"  converged: no improvement for {MAX_STAGNANT_ITERS} iterations"
+                logs.append(
+                    {
+                        "iteration": iteration_count,
+                        "action": "converged",
+                        "box": "",
+                        "bound": lower_bound,
+                        "volume": 0.0,
+                        "notes": f"no improvement for {MAX_STAGNANT_ITERS} iters",
+                    }
                 )
-                print(f"  final lower bound: {lower_bound}")
                 break
-
-            # TODO: implement iteration logging
-            # (ideally as monadic state transformer)
-            if iteration_count % 100 == 0:
-                stagnant_count = iteration_count - last_improvement_iter
-                print(
-                    f"  iteration {iteration_count}, queue size: {len(queue)}, current lower bound: {lower_bound}, stagnant: {stagnant_count}"
-                )
 
             box: BoxN = queue.pop()
             box_constraints = box.build_constraints(vars)
@@ -103,6 +102,16 @@ class GlobalMinBranchAndBound(Algorithm):
             improved_model = CheckSatisfiability(improved_formula, delta)
             if improved_model is None:
                 # no such point ⇒ this box cannot improve lower bound ⇒ discard
+                logs.append(
+                    {
+                        "iteration": iteration_count,
+                        "action": "prune",
+                        "box": str(box),
+                        "bound": lower_bound,
+                        "volume": box.volume,
+                        "notes": "box cannot improve lower bound",
+                    }
+                )
                 continue
             else:
                 # extract a point from improved model, and update lower bound
@@ -112,9 +121,29 @@ class GlobalMinBranchAndBound(Algorithm):
                 if f_at_mids < lower_bound - CONVERGENCE_TOLERANCE:
                     lower_bound = f_at_mids
                     last_improvement_iter = iteration_count
+                    logs.append(
+                        {
+                            "iteration": iteration_count,
+                            "action": "update_bound",
+                            "box": str(box),
+                            "bound": lower_bound,
+                            "volume": box.volume,
+                            "notes": f"new lower bound: {lower_bound}",
+                        }
+                    )
 
             # 2. If the box is already small enough, do a local Minimize on this box
             if box.max_side_length <= min_box_size:
+                logs.append(
+                    {
+                        "iteration": iteration_count,
+                        "action": "prune",
+                        "box": str(box),
+                        "bound": lower_bound,
+                        "volume": box.volume,
+                        "notes": f"box is small enough (max side: {box.max_side_length})",
+                    }
+                )
                 continue
                 # NOTE: 3 ways;
                 # 1) directly skip
@@ -145,13 +174,23 @@ class GlobalMinBranchAndBound(Algorithm):
             if fully_feasible:
                 sol_box = Minimize(fn_expr, box_constraints, delta)
                 if not sol_box:
-                    return Left(ERROR_NO_GLOBAL_MIN)
+                    return Failure(ERROR_NO_GLOBAL_MIN)
 
                 f_min_approx = eval_rational(obj, from_box_model(sol_box).center)
 
                 if f_min_approx < lower_bound - CONVERGENCE_TOLERANCE:
                     lower_bound = f_min_approx
                     last_improvement_iter = iteration_count
+                    logs.append(
+                        {
+                            "iteration": iteration_count,
+                            "action": "minimize_feasible",
+                            "box": str(box),
+                            "bound": lower_bound,
+                            "volume": box.volume,
+                            "notes": f"box is fully feasible, new lower bound: {lower_bound}",
+                        }
+                    )
                 continue
 
             # 3. Otherwise, the box intersects the feasible region but is not
@@ -160,6 +199,25 @@ class GlobalMinBranchAndBound(Algorithm):
             b1, b2 = splitter(box, obj)
             queue.append(b1)
             queue.append(b2)
+            logs.append(
+                {
+                    "iteration": iteration_count,
+                    "action": "split",
+                    "box": str(box),
+                    "bound": lower_bound,
+                    "volume": box.volume,
+                    "notes": f"split into {b1} and {b2}",
+                }
+            )
 
-        print(f"algorithm completed after {iteration_count} iterations")
-        return Right(lower_bound)
+        logs.append(
+            {
+                "iteration": iteration_count,
+                "action": "completed",
+                "box": "",
+                "bound": lower_bound,
+                "volume": 0.0,
+                "notes": f"algorithm completed after {iteration_count} iters",
+            }
+        )
+        return Success((lower_bound, logs))

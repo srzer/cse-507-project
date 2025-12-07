@@ -1,13 +1,14 @@
 from collections import deque
-from typing import Deque, List
+from typing import Deque, List, Tuple
 from typing_extensions import Self
 
 from dreal import Formula, Variable
+from returns.result import Result, Success
 
 from box import BoxN, BoxSplit, Point
 from objective import ObjectiveBounds, Rational, eval_rational
 
-from .either import Either, Left, Right
+from .log import LogEntry
 from .type import Algorithm
 
 # FIXME: why do we have separate algorithm implementations?
@@ -34,9 +35,10 @@ class FeasibleMinBranchAndBound(Algorithm):
         min_box_size: float,
         delta: float,
         err: float,
-    ) -> Either[str, float]:
+    ) -> Result[Tuple[float, List[LogEntry]], str]:
         # fn_expr = eval_symbolic(obj, vars)
         lower_bound = self.initial_lower_bound
+        logs: List[LogEntry] = []
 
         queue: Deque[BoxN] = deque()
         queue.append(init_box)
@@ -67,7 +69,7 @@ class FeasibleMinBranchAndBound(Algorithm):
             queue.append(b1)
             queue.append(b2)
 
-        return Right(lower_bound)
+        return Success((lower_bound, logs))
 
 
 # generate all 2^n corner points of a box in n dimensions
