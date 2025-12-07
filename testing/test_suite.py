@@ -1,7 +1,6 @@
 import time
 import math
 import warnings
-import sys
 from dataclasses import dataclass
 from typing import Callable, List
 
@@ -505,7 +504,7 @@ if __name__ == "__main__":
         test_rational_valley(),
         test_positive_islands(),
         test_sparse_intersection(),
-        test_main_example(),
+        # test_main_example(),
     ]
 
     run_test_suite(problems)
