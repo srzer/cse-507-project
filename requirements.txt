@@ -11,6 +11,7 @@ pluggy==1.6.0
 Pygments==2.19.2
 pyright==1.1.407
 pytest==9.0.1
+returns==0.26.0
 ruff==0.14.7
 scipy==1.15.3
 sortedcontainers==2.4.0

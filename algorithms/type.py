@@ -1,13 +1,14 @@
 from abc import ABC, abstractmethod
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from dreal import Formula, Variable
+from returns.result import Result
 from typing_extensions import Self
 
 from box import BoxN, BoxSplit, SplitLongestSide
 from objective import Rational, ObjectiveBounds, AffineBounds
 
-from .either import Either
+from .log import LogEntry
 
 
 # NOTE: using abstract base class instead of protocol for explicit typing enforcement
@@ -36,7 +37,7 @@ class Algorithm(ABC):
         min_box_size: float = 0.1,
         delta: float = 1e-3,
         err: float = 1e-4,
-    ) -> Either[str, float]:
+    ) -> Result[Tuple[float, List[LogEntry]], str]:
         # TODO: complete dimensionality checks
         # we want to assert that the following have the same dimensionality:
         # 1. max(# diff vars in obj fn)
@@ -84,4 +85,4 @@ class Algorithm(ABC):
         min_box_size: float,
         delta: float,
         err: float,
-    ) -> Either[str, float]: ...
+    ) -> Result[Tuple[float, List[LogEntry]], str]: ...
