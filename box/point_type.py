@@ -9,6 +9,9 @@ from typing_extensions import Self
 class Point:
     coords: Tuple[float, ...]
 
+    def __str__(self: Self) -> str:
+        return str(self.coords)
+
     def __init__(self: Self, coords: Iterable[float]):
         object.__setattr__(self, "coords", tuple(coords))
 
