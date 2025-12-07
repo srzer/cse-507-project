@@ -3,7 +3,7 @@ from typing import List
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable
 
 from algorithms import Algorithm
-from box import BoxN, BoxSplit, build_constraints, from_box_model
+from box import BoxN, BoxSplit, from_box_model
 from objective import Rational, ObjectiveBounds, eval_rational, eval_symbolic
 
 from .either import Either, Left, Right
@@ -33,7 +33,7 @@ class BaselineMin(Algorithm):
         """
         fn_expr = eval_symbolic(obj, vars)
 
-        region_constraints = And(build_constraints(init_box, vars), constr)
+        region_constraints = And(init_box.build_constraints(vars), constr)
 
         # check feasibility
         model = CheckSatisfiability(region_constraints, delta)

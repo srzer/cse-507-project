@@ -4,7 +4,8 @@ from typing import Deque, List, Optional
 from dreal import And, CheckSatisfiability, Formula, Minimize, Variable
 
 from algorithms import Algorithm
-from box import BoxN, BoxSplit, build_constraints, from_box_model, full_check
+from box import BoxN, BoxSplit, FullFeasible, from_box_model
+from box.feasibility.check import FullFeasible
 from objective import Rational, ObjectiveBounds, eval_rational, eval_symbolic
 
 from .either import Either, Left, Right
@@ -53,7 +54,7 @@ class GlobalMinBranchAndBound(Algorithm):
         fn_expr = eval_symbolic(obj, vars)
 
         # feasibility check & initial lower bound
-        init_constraints = And(build_constraints(init_box, vars), constr)
+        init_constraints = And(init_box.build_constraints(vars), constr)
 
         model_box = CheckSatisfiability(init_constraints, delta)
         if model_box is None:
@@ -93,7 +94,7 @@ class GlobalMinBranchAndBound(Algorithm):
                 )
 
             box: BoxN = queue.pop()
-            box_constraints = build_constraints(box, vars)
+            box_constraints = box.build_constraints(vars)
 
             # 1. Prune by checking if the box can still improve the global bound lower_bound:
             #    Is there any point in this box with constraint satisfied
@@ -134,17 +135,14 @@ class GlobalMinBranchAndBound(Algorithm):
                 if f_min_approx < lower_bound - CONVERGENCE_TOLERANCE:
                     lower_bound = f_min_approx
                     last_improvement_iter = iteration_count
-                #     # print("Updated global lower bound B =", B)
                 continue
 
             # 2bis. If the entire box is within the feasible region, we can also
             #       call Minimize directly on the whole box.
 
-            # fully_feasible = box_is_fully_feasible(box_constraints, constraint, delta_dreal)
-            # TODO: implement the whole feasible heuristics function here when ready
-            fully_feasible = full_check(constr, box_constraints, delta)
+            # TODO: implement the CompleteFeasible heuristics function here when ready
+            fully_feasible = FullFeasible()(box, vars, constr, delta)
             if fully_feasible:
-                # print("Box fully feasible, performing minimize on full box.")
                 sol_box = Minimize(fn_expr, box_constraints, delta)
                 if not sol_box:
                     return Left(ERROR_NO_GLOBAL_MIN)
@@ -154,11 +152,10 @@ class GlobalMinBranchAndBound(Algorithm):
                 if f_min_approx < lower_bound - CONVERGENCE_TOLERANCE:
                     lower_bound = f_min_approx
                     last_improvement_iter = iteration_count
-                    # print("Updated global lower bound B =", B)
                 continue
 
             # 3. Otherwise, the box intersects the feasible region but is not
-            #    fully inside it, and it may still contain points with f < B - eps.
+            #    fully inside it, and it may still contain points with obj < lower bound - eps.
             #    We split it and continue the search.
             b1, b2 = splitter(box, obj)
             queue.append(b1)

@@ -1,5 +1,6 @@
 from collections import deque
 from typing import Deque, List
+from typing_extensions import Self
 
 from dreal import Formula, Variable
 
@@ -16,11 +17,13 @@ from .type import Algorithm
 
 
 class FeasibleMinBranchAndBound(Algorithm):
-    def __init__(self, initial_lower_bound: float = float("inf")):
+    initial_lower_bound: float
+
+    def __init__(self: Self, initial_lower_bound: float = float("inf")):
         self.initial_lower_bound = initial_lower_bound
 
     def _run(
-        self,
+        self: Self,
         dim: int,
         init_box: BoxN,
         obj: Rational,

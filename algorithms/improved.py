@@ -6,21 +6,20 @@ from dreal import And, CheckSatisfiability, Formula, Variable
 from box import (
     BoxN,
     BoxSplit,
-    build_constraints,
-    full_check,
+    FullFeasible,
     from_box_model,
 )
 from objective import (
-    Rational,
     ObjectiveBounds,
+    Rational,
     eval_rational,
     eval_symbolic,
 )
 
 from .either import Either, Left, Right
+from .errors import CONVERGENCE_TOLERANCE, MAX_STAGNANT_ITERS
 from .feasible import FeasibleMinBranchAndBound
 from .type import Algorithm
-from .errors import CONVERGENCE_TOLERANCE, MAX_STAGNANT_ITERS
 
 
 class ImprovedGlobalMinBranchAndBound(Algorithm):
@@ -38,7 +37,7 @@ class ImprovedGlobalMinBranchAndBound(Algorithm):
         err: float,
     ) -> Either[str, float]:
         fn_expr = eval_symbolic(obj, vars)
-        init_constr = And(build_constraints(init_box, vars), constr)
+        init_constr = And(init_box.build_constraints(vars), constr)
 
         model = CheckSatisfiability(init_constr, delta)
         if not model:
@@ -71,7 +70,7 @@ class ImprovedGlobalMinBranchAndBound(Algorithm):
                     f"  iteration {iteration_count}, queue size: {len(queue)}, current lower bound: {lower_bound}, stagnant: {stagnant_count}"
                 )
             box = queue.pop()
-            box_constraints = build_constraints(box, vars)
+            box_constraints = box.build_constraints(vars)
 
             bounded_min, _ = bounder(obj, box)
 
@@ -101,7 +100,7 @@ class ImprovedGlobalMinBranchAndBound(Algorithm):
             # FIXME: we probably want the complete feasibility check here,
             # the one with all of the heuristics?
             # instead of just the full check
-            if full_check(constr, box_constraints, delta):
+            if FullFeasible()(box, vars, constr, delta):
                 temp_lower_bound = FeasibleMinBranchAndBound(lower_bound)(
                     dim,
                     box,
