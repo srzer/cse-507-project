@@ -4,12 +4,10 @@ from itertools import product
 
 from box import SplitGradient, SplitLongestSide
 from objective import AffineBounds, BernsteinBounds
-from returns.result import Success
-from testing.example import (
-    rational_objective_example,
-    ball_constraint_example,
-    initial_constraint_box,
-)
+from returns.result import Success, Failure
+
+from testing.example import make_example_problem_1, make_example_problem_2
+from testing.standard_tests import all_standard_tests
 from algorithms import (
     GlobalMinBranchAndBound,
     ImprovedGlobalMinBranchAndBound,
@@ -18,21 +16,38 @@ from algorithms import (
 from algorithms.log import save_logs_to_csv
 from testing.reporting import results_to_markdown, save_results_to_csv
 
+# main config
+GENERATE_DETAILED_LOGS = False
+PROBLEM_DIMENSION = 3
+
+# skip config for known problematic tests
+# This list defines combinations of problem/algorithm/heuristics that
+# are known to hang indefinitely due to dreal limitations.
+SKIP_LIST = [
+    {
+        "problem": "Example Problem 2",
+        "algorithm": "GlobalMinBranchAndBound",
+        "splitter": "SplitLongestSide",
+    },
+    {
+        "problem": "Sparse Intersection",
+        "algorithm": "ImprovedGlobalMinBranchAndBound",
+        "splitter": "SplitGradient",
+    },
+    {
+        "problem": "Sparse Intersection",
+        "algorithm": "GlobalMinBranchAndBound",
+        "splitter": "SplitGradient",
+    },
+]
+
 if __name__ == "__main__":
-    # configuration
-    dim = 3
-    min_box_size = 0.1
-    delta = 1e-3
-    err = 1e-4
+    problems = [
+        # make_example_problem_1(PROBLEM_DIMENSION),
+        # make_example_problem_2(PROBLEM_DIMENSION),
+    ]
+    problems.extend(all_standard_tests(PROBLEM_DIMENSION))
 
-    # problem definition
-    init_box = initial_constraint_box(dim)
-    fn_obj = rational_objective_example(dim)
-    # assume all algos can use the same default vars for this problem
-    shared_vars = GlobalMinBranchAndBound()._default_variables(dim)
-    constr = ball_constraint_example(shared_vars)
-
-    # define runs
     bnb_algorithms = [GlobalMinBranchAndBound(), ImprovedGlobalMinBranchAndBound()]
     splitters = [SplitLongestSide(), SplitGradient()]
     bounders = [AffineBounds(), BernsteinBounds()]
@@ -43,64 +58,86 @@ if __name__ == "__main__":
     ]
     run_configs.append({"algo": BaselineMin(), "splitter": None, "bounder": None})
 
-    # execution
     all_results = []
-    print(f"=== starting algorithm comparison on {datetime.now()} ===")
-    print(f"    dim          = {dim}")
-    print(f"    min_box_size = {min_box_size}")
-    print(f"    delta        = {delta}")
-    print(f"    err          = {err}")
+    print(f"starting test suite on {datetime.now()}")
 
-    for config in run_configs:
-        algo = config["algo"]
-        splitter = config["splitter"]
-        bounder = config["bounder"]
+    for problem in problems:
+        print(f"\nrunning problem: {problem.name} dim {problem.dim}")
+        for config in run_configs:
+            algo = config["algo"]
+            splitter = config["splitter"]
+            bounder = config["bounder"]
 
-        algo_name = algo.__class__.__name__
-        splitter_name = splitter.__class__.__name__ if splitter else "N/A"
-        bounder_name = bounder.__class__.__name__ if bounder else "N/A"
+            algo_name = algo.__class__.__name__
+            splitter_name = splitter.__class__.__name__ if splitter else "NA"
+            bounder_name = bounder.__class__.__name__ if bounder else "NA"
 
-        print(f"running: {algo_name} with {splitter_name} and {bounder_name}")
+            print(f"  -> running: {algo_name} with {splitter_name} and {bounder_name}")
 
-        t_start = time.time()
-        result = algo(
-            dim,
-            init_box,
-            fn_obj,
-            shared_vars,
-            constr,
-            splitter=splitter,
-            bounder=bounder,
-            min_box_size=min_box_size,
-            delta=delta,
-            err=err,
-        )
-        t_end = time.time()
-        run_time = t_end - t_start
+            is_skipped = False
+            for skip_rule in SKIP_LIST:
+                if (
+                    skip_rule.get("problem") == problem.name
+                    and skip_rule.get("algorithm") == algo_name
+                    and skip_rule.get("splitter") == splitter_name
+                ):
+                    is_skipped = True
+                    break
 
-        if isinstance(result, Success):
-            bound, logs = result.unwrap()
-        else:
-            bound, logs = -1.0, []
-            print(f"  -> algorithm failed with error: {result.failure()}")
+            if is_skipped:
+                print("    -> SKIPPED (known to hang)")
+                all_results.append(
+                    {
+                        "problem": problem.name,
+                        "algorithm": algo_name,
+                        "splitter": splitter_name,
+                        "bounder": bounder_name,
+                        "runtime": "SKIPPED",
+                        "bound": "SKIPPED",
+                    }
+                )
+                continue
 
-        all_results.append(
-            {
-                "algorithm": algo_name,
-                "splitter": splitter_name,
-                "bounder": bounder_name,
-                "runtime (s)": round(run_time, 4),
-                "final Bound": round(bound, 6),
-            }
-        )
+            t_start = time.time()
+            result = algo(
+                dim=problem.dim,
+                init_box=problem.initial_box,
+                obj=problem.objective,
+                vars=problem.variables,
+                constr=problem.constraints,
+                splitter=splitter,
+                bounder=bounder,
+            )
+            t_end = time.time()
+            run_time = t_end - t_start
 
-        log_filename = f"logs_{algo_name}_{splitter_name}_{bounder_name}.csv"
-        save_logs_to_csv(logs, log_filename)
-        print(
-            f"  -> finished in {run_time:.4f}s. result: {bound:.6f}. logs: {log_filename}"
-        )
+            if isinstance(result, Success):
+                bound, logs = result.unwrap()
+            else:
+                bound, logs = -1.0, []
+                print(f"    -> algorithm failed with error: {result.failure()}")
 
-    print("\n=== comparison summary ===")
+            all_results.append(
+                {
+                    "problem": problem.name,
+                    "algorithm": algo_name,
+                    "splitter": splitter_name,
+                    "bounder": bounder_name,
+                    "runtime": round(run_time, 4),
+                    "bound": round(bound, 6),
+                }
+            )
+
+            if GENERATE_DETAILED_LOGS:
+                log_filename = f"logs_{problem.name}_{algo_name}_{splitter_name}_{bounder_name}.csv"
+                save_logs_to_csv(logs, log_filename)
+                print(
+                    f"    -> finished in {run_time:.4f}s. result: {bound:.6f}. logs: {log_filename}"
+                )
+            else:
+                print(f"    -> finished in {run_time:.4f}s. result: {bound:.6f}.")
+
+    print("\noverall comparison summary")
     print(results_to_markdown(all_results))
     save_results_to_csv(all_results, "comparison_summary.csv")
     print("\nsummary saved to comparison_summary.csv")

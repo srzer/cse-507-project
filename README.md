@@ -46,6 +46,26 @@ Box slicing heuristics
 
 
 
+## Known Limitations
+
+### dReal Solver Hangs
+
+Some complex problem configurations, particularly those involving intricate constraints or objective functions with singularities, can cause the underlying `dreal` SMT solver to enter a very long-running computation, effectively "hanging" the algorithm.
+
+This is a fundamental limitation of using an external solver without a direct timeout API. Due to the way Python interacts with the `dreal` C++ library (specifically, an issue with serializing `dreal` objects for inter-process communication), a robust, low-level timeout on individual `dreal` calls is not feasible in the current architecture.
+
+To manage this, a "skip list" has been implemented in `main.py`:
+
+```python
+# In main.py
+SKIP_CONFIGS = [
+    # ... configurations known to hang are listed here ...
+]
+```
+
+Any test run that matches a configuration in this list will be skipped automatically, allowing the test suite to complete reliably. If you encounter a new, consistently hanging test, please add it to this list.
+
+
 ## To Do
 [x] Establish a toolkit of smart (e.g. function-behavior-aware) splitting heuristics.
 

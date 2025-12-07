@@ -225,3 +225,5 @@ Baseline dReal Minimize time: 8.513031005859375 seconds
 │ | ImprovedGlobalMinBranchAndBound | SplitGradient | AffineBounds | 1.1619 | 0.525303 |                                                                                                                 │
 │ | ImprovedGlobalMinBranchAndBound | SplitGradient | BernsteinBounds | 1.1796 | 0.525303 |                                                                                                              │
 │ | BaselineMin | N/A | N/A | 8.5243 | 0.42095 |
+
+// encountered some timeout issues with different combinations of split and bound heuristics, e.g. sparse intersection test dim 3 with gradientsplit and affinebounds

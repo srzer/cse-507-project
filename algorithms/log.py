@@ -1,10 +1,9 @@
-# This file contains the core types for logging.
 import csv
 from typing import TypedDict
 
 
+# log entry, attempt to add writer monad
 class LogEntry(TypedDict):
-    # A structured log entry.
     iteration: int
     action: str
     box: str

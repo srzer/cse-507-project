@@ -8,6 +8,7 @@ from returns.result import Result, Success
 from box import BoxN, BoxSplit, Point
 from objective import ObjectiveBounds, Rational, eval_rational
 
+from .errors import CONVERGENCE_TOLERANCE, MAX_STAGNANT_ITERS
 from .log import LogEntry
 from .type import Algorithm
 
@@ -36,18 +37,22 @@ class FeasibleMinBranchAndBound(Algorithm):
         delta: float,
         err: float,
     ) -> Result[Tuple[float, List[LogEntry]], str]:
-        # fn_expr = eval_symbolic(obj, vars)
         lower_bound = self.initial_lower_bound
         logs: List[LogEntry] = []
-
         queue: Deque[BoxN] = deque()
         queue.append(init_box)
 
+        iteration_count = 0
+        last_improvement_iter = 0
+
         while queue:
+            iteration_count += 1
+            if iteration_count - last_improvement_iter > MAX_STAGNANT_ITERS:
+                break
+
             box: BoxN = queue.pop()
 
             bounded_min, _ = bounder(obj, box)
-
             if bounded_min >= lower_bound - err:
                 continue
 
@@ -55,14 +60,16 @@ class FeasibleMinBranchAndBound(Algorithm):
             # TODO: implement heuristic to prevent over-execution
             for corner in generate_corners(box):
                 obj_at_corner = eval_rational(obj, corner)
-                if obj_at_corner < lower_bound:
+                if obj_at_corner < lower_bound - CONVERGENCE_TOLERANCE:
                     lower_bound = obj_at_corner
+                    last_improvement_iter = iteration_count
 
             # 2. If the box is already small enough, pick the center value
             if box.max_side_length <= min_box_size:
                 obj_at_center = eval_rational(obj, box.center)
-                if obj_at_center < lower_bound:
+                if obj_at_center < lower_bound - CONVERGENCE_TOLERANCE:
                     lower_bound = obj_at_center
+                    last_improvement_iter = iteration_count
                 continue
 
             b1, b2 = splitter(box, obj)
