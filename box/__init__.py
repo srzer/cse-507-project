@@ -1,7 +1,12 @@
-from .type import BoxN, Point, from_box_model
-from .constraints import build_constraints, build_basic_box
-from .feasibility import full_check, feasible
-from .split import BoxSplit, SplitLongestSide, SplitGradient
+from .box_type import BoxN, from_box_model, build_basic_box
+from .point_type import Point
+from .feasibility.check import (
+    CompleteFeasible,
+    FullFeasible,
+    GridFeasible,
+    RandomFeasible,
+)
+from .split.type import BoxSplit, SplitLongestSide, SplitGradient
 
 __all__ = [
     # types
@@ -9,11 +14,12 @@ __all__ = [
     "Point",
     "from_box_model",
     # constraints
-    "build_constraints",
     "build_basic_box",
     # feasibility
-    "full_check",
-    "feasible",
+    "CompleteFeasible",
+    "FullFeasible",
+    "GridFeasible",
+    "RandomFeasible",
     # split
     "BoxSplit",
     "SplitLongestSide",
