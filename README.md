@@ -44,10 +44,18 @@ Box slicing heuristics
 
 - plot lower bound by iterations 
 
+
+
 ## To Do
 [x] Establish a toolkit of smart (e.g. function-behavior-aware) splitting heuristics.
+
 [x] Replace expensive dReal solver calls with the Bernstein or Affine methods.
-[ ] Write more tests to demonstrate determine our method's advantage compared to dReal.
+
+[ ] Write more tests to demonstrate determine our method's advantage compared
+to dReal.
+
+[ ] Write variable spread heuristics (heuristic_splitting 240-283, 285-319) for smarter box splitting
+
 
 ## Requirements
 

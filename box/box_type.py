@@ -24,7 +24,7 @@ class BoxN:
         return cls(Point(l1), Point(l2))
 
     def __str__(self: Self) -> str:
-        return f"({self.min}, {self.max})"
+        return f"{self.min}, {self.max}"
 
     @property
     def dim(self: Self) -> int:

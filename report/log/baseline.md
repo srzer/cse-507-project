@@ -212,3 +212,16 @@ Baseline dReal Minimize time: 8.513031005859375 seconds
 
 // affine + gradient seems to not work
 // but affine by itself seems to do pretty good!
+
+--- Comparison Summary ---                                                                                                                                                                             │
+│ | Algorithm | Splitter | Bounder | Runtime (s) | Final Bound |                                                                                                                                         │
+│ | --- | --- | --- | --- | --- |                                                                                                                                                                        │
+│ | GlobalMinBranchAndBound | SplitLongestSide | AffineBounds | 12.0786 | 0.430917 |                                                                                                                     │
+│ | GlobalMinBranchAndBound | SplitLongestSide | BernsteinBounds | 12.0705 | 0.430917 |                                                                                                                  │
+│ | GlobalMinBranchAndBound | SplitGradient | AffineBounds | 1.1497 | 0.525303 |                                                                                                                         │
+│ | GlobalMinBranchAndBound | SplitGradient | BernsteinBounds | 1.152 | 0.525303 |                                                                                                                       │
+│ | ImprovedGlobalMinBranchAndBound | SplitLongestSide | AffineBounds | 3.3104 | 0.430917 |                                                                                                              │
+│ | ImprovedGlobalMinBranchAndBound | SplitLongestSide | BernsteinBounds | 3.8554 | 0.430917 |                                                                                                           │
+│ | ImprovedGlobalMinBranchAndBound | SplitGradient | AffineBounds | 1.1619 | 0.525303 |                                                                                                                 │
+│ | ImprovedGlobalMinBranchAndBound | SplitGradient | BernsteinBounds | 1.1796 | 0.525303 |                                                                                                              │
+│ | BaselineMin | N/A | N/A | 8.5243 | 0.42095 |

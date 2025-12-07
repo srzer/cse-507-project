@@ -17,7 +17,7 @@ from objective import (
     eval_symbolic,
 )
 
-from .errors import CONVERGENCE_TOLERANCE, MAX_STAGNANT_ITERS
+from .errors import CONVERGENCE_TOLERANCE, MAX_STAGNANT_ITERS, ERROR_INFEASIBLE
 from .feasible import FeasibleMinBranchAndBound
 from .log import LogEntry
 from .type import Algorithm
@@ -43,7 +43,7 @@ class ImprovedGlobalMinBranchAndBound(Algorithm):
 
         model = CheckSatisfiability(init_constr, delta)
         if not model:
-            return Failure("Model is not satisfiable with given constraints")
+            return Failure(ERROR_INFEASIBLE)
 
         lower_bound = eval_rational(obj, from_box_model(model).center)
 

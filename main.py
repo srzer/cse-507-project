@@ -45,7 +45,11 @@ if __name__ == "__main__":
 
     # execution
     all_results = []
-    print(f"--- Starting Algorithm Comparison on {datetime.now()} ---")
+    print(f"=== starting algorithm comparison on {datetime.now()} ===")
+    print(f"    dim          = {dim}")
+    print(f"    min_box_size = {min_box_size}")
+    print(f"    delta        = {delta}")
+    print(f"    err          = {err}")
 
     for config in run_configs:
         algo = config["algo"]
@@ -56,7 +60,7 @@ if __name__ == "__main__":
         splitter_name = splitter.__class__.__name__ if splitter else "N/A"
         bounder_name = bounder.__class__.__name__ if bounder else "N/A"
 
-        print(f"Running: {algo_name} with {splitter_name} and {bounder_name}")
+        print(f"running: {algo_name} with {splitter_name} and {bounder_name}")
 
         t_start = time.time()
         result = algo(
@@ -78,25 +82,25 @@ if __name__ == "__main__":
             bound, logs = result.unwrap()
         else:
             bound, logs = -1.0, []
-            print(f"  -> Algorithm failed with error: {result.failure()}")
+            print(f"  -> algorithm failed with error: {result.failure()}")
 
         all_results.append(
             {
-                "Algorithm": algo_name,
-                "Splitter": splitter_name,
-                "Bounder": bounder_name,
-                "Runtime (s)": round(run_time, 4),
-                "Final Bound": round(bound, 6),
+                "algorithm": algo_name,
+                "splitter": splitter_name,
+                "bounder": bounder_name,
+                "runtime (s)": round(run_time, 4),
+                "final Bound": round(bound, 6),
             }
         )
 
         log_filename = f"logs_{algo_name}_{splitter_name}_{bounder_name}.csv"
         save_logs_to_csv(logs, log_filename)
         print(
-            f"  -> Finished in {run_time:.4f}s. Result: {bound:.6f}. Logs: {log_filename}"
+            f"  -> finished in {run_time:.4f}s. result: {bound:.6f}. logs: {log_filename}"
         )
 
-    print("\n=== Comparison Summary ===")
+    print("\n=== comparison summary ===")
     print(results_to_markdown(all_results))
     save_results_to_csv(all_results, "comparison_summary.csv")
-    print("\nSummary saved to comparison_summary.csv")
+    print("\nsummary saved to comparison_summary.csv")
