@@ -2,7 +2,7 @@
 
 Optimizing positive rational functions $\R^n -> \R$ with polynomial inequality constraints using interval arithmetic, Bernstein polynomial form, and branch-and-bound methods.
 
-## Current implementation of n-dimensional branch-and-prune algorithm using Bernstein method
+## Current implementation of n-dimensional branch-and-prune algorithm
 
 - The input rational function is represented as two lists of terms, each term is [coefficient, [exponent_vector]].
 For example, $f(x,y) = (2x^2y + 3y^2) / (x^2 + y)$, then numerator_terms = [ [2, [2,1]], [3, [0,2]] ], and denominator_terms = [ [1, [2,0]], [1, [0,1]] ].
@@ -34,14 +34,20 @@ Box feasibility sampling heuristics
 - random (with some seed?)
 
 Box slicing heuristics 
-- 1?
-- 2?
+- bisect on random dimension
+- bisect on longest side dimension
 - dimension of greatest change (derivative)
 
+### Logging
+
+- compare runtime & lower bound
+
+- plot lower bound by iterations 
+
 ## To Do
-- Establish a toolkit of smart (e.g. function-behavior-aware) splitting heuristics.
-- Replace expensive dReal solver calls through the Bernstein method.
-- Write more tests to demonstrate our method's advantage.
+[x] Establish a toolkit of smart (e.g. function-behavior-aware) splitting heuristics.
+[x] Replace expensive dReal solver calls with the Bernstein or Affine methods.
+[ ] Write more tests to demonstrate determine our method's advantage compared to dReal.
 
 ## Requirements
 
