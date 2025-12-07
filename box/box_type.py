@@ -1,34 +1,13 @@
-import math
-from dataclasses import dataclass, replace
-from typing import Iterable, Iterator, Tuple
-from typing_extensions import Self
+from dataclasses import dataclass
+from math import prod
+from typing import Iterable
 
-from dreal import Box
+from dreal import And, Box, Formula, Variable
+from typing_extensions import Self
 
 from interval import Bounds
 
-
-# Point = NewType("Point", Tuple[float, ...])
-@dataclass(frozen=True, init=False)
-class Point:
-    coords: Tuple[float, ...]
-
-    def __init__(self, coords: Iterable[float]):
-        object.__setattr__(self, "coords", tuple(coords))
-
-    def with_value(self, i: int, v: float) -> Self:
-        assert i < len(self), f"Point index {i} out of range {len(self)}."
-        new = self.coords[:i] + (v,) + self.coords[i + 1 :]
-        return replace(self, coords=Point(new))
-
-    def __getitem__(self, i: int) -> float:
-        return self.coords[i]
-
-    def __iter__(self) -> Iterator[float]:
-        return iter(self.coords)
-
-    def __len__(self) -> int:
-        return len(self.coords)
+from .point_type import Point
 
 
 # immutable
@@ -52,8 +31,7 @@ class BoxN:
     def sides(self: Self) -> list[Bounds]:
         return [Bounds(lo, hi) for lo, hi in zip(self.min, self.max)]
 
-    # def sides(self: Self) -> list[Tuple[float, float]]:
-    #    return list(zip(self.min, self.max))
+    # def sides(self: Self) -> list[Tuple[float, float]]: return list(zip(self.min, self.max))
 
     @property
     # center point of box
@@ -83,7 +61,7 @@ class BoxN:
     @property
     # calculate box volume
     def volume(self: Self) -> float:
-        return math.prod(self.lengths)
+        return prod(self.lengths)
 
     # return index of dimension with longest side
     def _max_side_idx(self: Self) -> int:
@@ -96,8 +74,25 @@ class BoxN:
         )
         return all(lo <= pt <= hi for pt, lo, hi in zip(p, self.min, self.max))
 
+    # build dReal constraints for box
+    def build_constraints(self: Self, vars: list[Variable]) -> Formula:
+        if len(vars) != self.dim:
+            raise ValueError(f"Expected {self.dim} variables, got {len(vars)}")
+        # this is some polymorphic insanity...
+        constraints = [
+            constr
+            for var, lo, hi in zip(vars, self.min, self.max)
+            for constr in (lo <= var, var <= hi)
+        ]
+        return And(*constraints) if constraints else Formula.TRUE()
+
 
 # convert from dReal Box type
 def from_box_model(model: Box) -> BoxN:
     ivs = model.values()
     return BoxN.from_lists([iv.lb() for iv in ivs], [iv.ub() for iv in ivs])
+
+
+# build initial axis-aligned n dimensional box
+def build_basic_box(min, max: float, dim: int) -> BoxN:
+    return BoxN(Point([min] * dim), Point([max] * dim))
