@@ -1,11 +1,14 @@
 from collections import defaultdict
-from .type import Polynomial, Rational, to_term
+from .polynomial_type import Polynomial, to_term
+from .rational_type import Rational
+
 
 class PolyBuilder:
     """
     Helper class to build Polynomials and Rationals using natural python syntax
     (e.g., x**2 + y).
     """
+
     def __init__(self, terms=None, dim=3):
         self.dim = dim
         self.terms = defaultdict(float)
@@ -64,10 +67,15 @@ class PolyBuilder:
         if isinstance(other, (int, float)):
             return PolyBuilder.const(other, self.dim)
         return other
-        
-    def __radd__(self, other): return self + other
-    def __rsub__(self, other): return PolyBuilder.const(other, self.dim) - self
-    def __rmul__(self, other): return self * other
+
+    def __radd__(self, other):
+        return self + other
+
+    def __rsub__(self, other):
+        return PolyBuilder.const(other, self.dim) - self
+
+    def __rmul__(self, other):
+        return self * other
 
     def to_polynomial(self) -> Polynomial:
         term_list = []
@@ -76,8 +84,9 @@ class PolyBuilder:
                 term_list.append(to_term(coeff, list(exps)))
         # If empty (zero), return a zero term
         if not term_list:
-            term_list.append(to_term(0.0, [0]*self.dim))
+            term_list.append(to_term(0.0, [0] * self.dim))
         return Polynomial(term_list)
+
 
 def make_vars(dim=3):
     return [PolyBuilder.var(i, dim) for i in range(dim)]
