@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
-# Define file paths
+# define file paths
 BASE_DIR = Path(__file__).resolve().parent.parent
 INPUT_CSV = BASE_DIR / "report" / "log" / "comparison_summary.csv"
 OUTPUT_DIR = BASE_DIR / "report" / "renders"

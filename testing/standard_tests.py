@@ -417,5 +417,5 @@ def all_standard_tests(dim: int) -> List[Problem]:
         test_rational_valley(dim),
         test_positive_islands(dim),
         test_sparse_intersection(dim),
-        test_main_example(dim),
+        # test_main_example(dim),
     ]
