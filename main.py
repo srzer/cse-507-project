@@ -1,88 +1,102 @@
 import time
 from datetime import datetime
+from itertools import product
 
 from box import SplitGradient, SplitLongestSide
 from objective import AffineBounds, BernsteinBounds
+from returns.result import Success
 from testing.example import (
     rational_objective_example,
     ball_constraint_example,
     initial_constraint_box,
 )
-
 from algorithms import (
     GlobalMinBranchAndBound,
     ImprovedGlobalMinBranchAndBound,
     BaselineMin,
 )
-
-# TODO: make use of asserts vs value errors consistent with whether function is exposed to client
+from algorithms.log import save_logs_to_csv
+from testing.reporting import results_to_markdown, save_results_to_csv
 
 if __name__ == "__main__":
-    global_algo = GlobalMinBranchAndBound()
-    improved_algo = ImprovedGlobalMinBranchAndBound()
-    baseline_algo = BaselineMin()
-
+    # configuration
     dim = 3
     min_box_size = 0.1
-    delta = 1e-3  # δ for dReal
-    # stop splitting when max side < min_box_size
-    # pruning margin
-    # both above values were set to 1e-3
+    delta = 1e-3
     err = 1e-4
+
+    # problem definition
     init_box = initial_constraint_box(dim)
     fn_obj = rational_objective_example(dim)
-    vars = global_algo._default_variables(dim)
-    constr = ball_constraint_example(vars)
-    # splitter = SplitGradient()
-    splitter = SplitLongestSide()
-    bounder = AffineBounds()
-    # bounder = BernsteinBounds()
+    # assume all algos can use the same default vars for this problem
+    shared_vars = GlobalMinBranchAndBound()._default_variables(dim)
+    constr = ball_constraint_example(shared_vars)
 
-    args = (
-        dim,
-        init_box,
-        fn_obj,
-        vars,
-        constr,
-        splitter,
-        bounder,
-        min_box_size,
-        delta,
-        err,
-    )
+    # define runs
+    bnb_algorithms = [GlobalMinBranchAndBound(), ImprovedGlobalMinBranchAndBound()]
+    splitters = [SplitLongestSide(), SplitGradient()]
+    bounders = [AffineBounds(), BernsteinBounds()]
 
-    # TODO: make .csv export of trail runs
+    run_configs = [
+        {"algo": algo, "splitter": splitter, "bounder": bounder}
+        for algo, splitter, bounder in product(bnb_algorithms, splitters, bounders)
+    ]
+    run_configs.append({"algo": BaselineMin(), "splitter": None, "bounder": None})
 
-    print(f"running with parameters on {datetime.now()}:")
-    print(f"  dim          = {dim}")
-    print(f"  init_box     = {init_box}")
-    print(f"  obj fn       = {fn_obj}")
-    print(f"  contraint    = {constr}")
-    print(f"  min_box_size = {min_box_size}")
-    print(f"  delta        = {delta}")
-    print(f"  err          = {err}")
-    print(f"  splitter     = {splitter}")
-    print(f"  bounder      = {bounder}")
+    # execution
+    all_results = []
+    print(f"--- Starting Algorithm Comparison on {datetime.now()} ---")
 
-    t0 = time.time()
-    print("\n=== Running GlobalMinBranchAndBound ===")
-    result1 = global_algo(*args)
-    t1 = time.time()
-    print(f"Result: {result1}")
-    print("Branch-and-bound time:", t1 - t0, "seconds")
+    for config in run_configs:
+        algo = config["algo"]
+        splitter = config["splitter"]
+        bounder = config["bounder"]
 
-    time.sleep(2)
-    t2 = time.time()
-    print("\n=== Running ImprovedGlobalMinBranchAndBound ===")
-    result2 = improved_algo(*args)
-    t3 = time.time()
-    print(f"Result: {result2}")
-    print("Improved Branch-and-bound time:", t3 - t2, "seconds")
+        algo_name = algo.__class__.__name__
+        splitter_name = splitter.__class__.__name__ if splitter else "N/A"
+        bounder_name = bounder.__class__.__name__ if bounder else "N/A"
 
-    time.sleep(2)
-    t4 = time.time()
-    print("\n=== Running BaselineMin ===")
-    result3 = baseline_algo(*args)
-    t5 = time.time()
-    print(f"Result: {result3}")
-    print("Baseline dReal Minimize time:", t5 - t4, "seconds")
+        print(f"Running: {algo_name} with {splitter_name} and {bounder_name}")
+
+        t_start = time.time()
+        result = algo(
+            dim,
+            init_box,
+            fn_obj,
+            shared_vars,
+            constr,
+            splitter=splitter,
+            bounder=bounder,
+            min_box_size=min_box_size,
+            delta=delta,
+            err=err,
+        )
+        t_end = time.time()
+        run_time = t_end - t_start
+
+        if isinstance(result, Success):
+            bound, logs = result.unwrap()
+        else:
+            bound, logs = -1.0, []
+            print(f"  -> Algorithm failed with error: {result.failure()}")
+
+        all_results.append(
+            {
+                "Algorithm": algo_name,
+                "Splitter": splitter_name,
+                "Bounder": bounder_name,
+                "Runtime (s)": round(run_time, 4),
+                "Final Bound": round(bound, 6),
+            }
+        )
+
+        log_filename = f"logs_{algo_name}_{splitter_name}_{bounder_name}.csv"
+        save_logs_to_csv(logs, log_filename)
+        print(
+            f"  -> Finished in {run_time:.4f}s. Result: {bound:.6f}. Logs: {log_filename}"
+        )
+
+    print("\n=== Comparison Summary ===")
+    print(results_to_markdown(all_results))
+    save_results_to_csv(all_results, "comparison_summary.csv")
+    print("\nSummary saved to comparison_summary.csv")
