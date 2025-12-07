@@ -1,8 +1,8 @@
 import time
+from datetime import datetime
 
-from box.split import SplitGradient, SplitLongestSide
-from objective.bound.affine import AffineBounds, _affine_bounds
-from objective.bound.bernstein import BernsteinBounds
+from box import SplitGradient, SplitLongestSide
+from objective import AffineBounds, BernsteinBounds
 from testing.example import (
     rational_objective_example,
     ball_constraint_example,
@@ -33,10 +33,10 @@ if __name__ == "__main__":
     fn_obj = rational_objective_example(dim)
     vars = global_algo._default_variables(dim)
     constr = ball_constraint_example(vars)
-    splitter = SplitGradient()
-    # splitter = SplitLongestSide()
-    # bounder = AffineBounds()
-    bounder = BernsteinBounds()
+    # splitter = SplitGradient()
+    splitter = SplitLongestSide()
+    bounder = AffineBounds()
+    # bounder = BernsteinBounds()
 
     args = (
         dim,
@@ -51,7 +51,9 @@ if __name__ == "__main__":
         err,
     )
 
-    print(f"running with parameters:")
+    # TODO: make .csv export of trail runs
+
+    print(f"running with parameters on {datetime.now()}:")
     print(f"  dim          = {dim}")
     print(f"  init_box     = {init_box}")
     print(f"  obj fn       = {fn_obj}")
