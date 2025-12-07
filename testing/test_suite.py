@@ -1,25 +1,24 @@
 import time
 import math
 import warnings
+import sys
 from dataclasses import dataclass
 from typing import Callable, List
 
 from dreal import Variable, And, Or
 
 from scipy.optimize import shgo, dual_annealing, differential_evolution
+from returns.result import Success
 
 from box import BoxN, Point
 from objective import Rational, PolyBuilder, make_vars
 
-# UPDATED IMPORT: Added feasible_min_branch_and_bound
-from ours import (
-    global_min_branch_and_bound, 
-    improved_global_min_branch_and_bound, 
-    feasible_min_branch_and_bound,
-    baseline_min_dreal
+from algorithms import (
+    GlobalMinBranchAndBound,
+    ImprovedGlobalMinBranchAndBound,
+    BaselineMin,
 )
-from poly_utils import poly_from_terms
-from box_utils import BoxND
+from algorithms.feasible import FeasibleMinBranchAndBound
 
 
 @dataclass
@@ -81,7 +80,6 @@ def run_scipy_dual_annealing(p: TestProblem):
 
 
 def run_test_suite(problems: List[TestProblem]):
-    # UPDATED HEADER: Added 'FEASIBLE' column and updated Time column
     header = (
         f"{'TEST NAME':<20} | "
         f"{'BASIC':<10} | "
@@ -97,18 +95,12 @@ def run_test_suite(problems: List[TestProblem]):
     print("-" * 155)
 
     for p in problems:
-        print(f"Running {p.name}...", end="\r")
+        msg = f"Running {p.name}..."
+        print(msg, end="\r", flush=True)
 
         dim = p.init_box.dim
         dreal_vars = [Variable(f"x{i}") for i in range(dim)]
         dreal_constraint = p.constraint_maker(*dreal_vars, And, Or)
-
-        # 1. Convert Polynomial (List) to Dictionary
-        num_dict = poly_from_terms(p.rational_obj.num)
-        den_dict = poly_from_terms(p.rational_obj.den)
-
-        # 2. Convert BoxN (min/max) to BoxND (lows/highs)
-        box_nd = BoxND(list(p.init_box.min), list(p.init_box.max))
 
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -116,69 +108,88 @@ def run_test_suite(problems: List[TestProblem]):
             # 1. Basic Solver
             t0 = time.time()
             try:
-                basic_res = global_min_branch_and_bound(
-                    initial_box=box_nd,
-                    n=dim,
-                    poly_num=num_dict,
-                    poly_den=den_dict,
+                algo = GlobalMinBranchAndBound()
+                result = algo(
+                    dim=dim,
+                    init_box=p.init_box,
+                    obj=p.rational_obj,
                     vars=dreal_vars,
-                    constraint=dreal_constraint,
-                    delta_dreal=1e-3,
+                    constr=dreal_constraint,
                     min_box_size=1e-3,
-                    eps=1e-3,
+                    delta=1e-3,
+                    err=1e-3,
                 )
-            except Exception as e:
-                # print(e)
+                if isinstance(result, Success):
+                    basic_res, _ = result.unwrap()
+                else:
+                    basic_res = "Fail"
+            except Exception:
                 basic_res = "Error"
             t_basic = time.time() - t0
 
             # 2. Improved Solver
             t1 = time.time()
             try:
-                imp_res = improved_global_min_branch_and_bound(
-                    initial_box=box_nd,
-                    n=dim,
-                    poly_num=num_dict,
-                    poly_den=den_dict,
+                algo = ImprovedGlobalMinBranchAndBound()
+                result = algo(
+                    dim=dim,
+                    init_box=p.init_box,
+                    obj=p.rational_obj,
                     vars=dreal_vars,
-                    constraint=dreal_constraint,
-                    delta_dreal=1e-3,
+                    constr=dreal_constraint,
                     min_box_size=1e-3,
-                    eps=1e-3,
+                    delta=1e-3,
+                    err=1e-3,
                 )
-            except Exception as e:
+                if isinstance(result, Success):
+                    imp_res, _ = result.unwrap()
+                else:
+                    imp_res = "Fail"
+            except Exception:
                 imp_res = "Error"
             t_imp = time.time() - t1
 
             # 3. Feasible Solver
             t_feas_start = time.time()
             try:
-                feas_res = feasible_min_branch_and_bound(
-                    initial_box=box_nd,
-                    n=dim,
-                    poly_num=num_dict,
-                    poly_den=den_dict,
+                # Initialize with default infinity bound or provide one if known
+                algo = FeasibleMinBranchAndBound()
+                result = algo(
+                    dim=dim,
+                    init_box=p.init_box,
+                    obj=p.rational_obj,
                     vars=dreal_vars,
-                    delta_dreal=1e-3,
+                    constr=dreal_constraint,
                     min_box_size=1e-3,
-                    eps=1e-3,
+                    delta=1e-3,
+                    err=1e-3,
                 )
-            except Exception as e:
+                if isinstance(result, Success):
+                    feas_res, _ = result.unwrap()
+                else:
+                    feas_res = "Fail"
+            except Exception:
                 feas_res = "Error"
             t_feas = time.time() - t_feas_start
 
             # 4. dReal Baseline
             t2 = time.time()
             try:
-                dreal_res = baseline_min_dreal(
-                    initial_box=box_nd,
-                    n=dim,
-                    poly_num=num_dict,
-                    poly_den=den_dict,
+                algo = BaselineMin()
+                result = algo(
+                    dim=dim,
+                    init_box=p.init_box,
+                    obj=p.rational_obj,
                     vars=dreal_vars,
-                    constraint=dreal_constraint,
-                    delta_dreal=1e-3,
+                    constr=dreal_constraint,
+                    min_box_size=1e-3,
+                    delta=1e-3,
+                    err=1e-3,
                 )
+                if isinstance(result, Success):
+                    dreal_res, _ = result.unwrap()
+                else:
+                    dreal_res = "Fail"
             except Exception:
                 dreal_res = "Error"
             t_dreal = time.time() - t2
@@ -203,7 +214,7 @@ def run_test_suite(problems: List[TestProblem]):
                 return val
             return f"{val:.4f}"
 
-        print(
+        row_str = (
             f"{p.name:<20} | "
             f"{fmt(basic_res):<10} | "
             f"{fmt(imp_res):<10} | "
@@ -214,24 +225,8 @@ def run_test_suite(problems: List[TestProblem]):
             f"{fmt(da_res):<10} | "
             f"{t_basic:.2f}/{t_imp:.2f}/{t_feas:.2f}/{t_dreal:.2f}/{t_sh:.2f}/{t_de:.2f}/{t_da:.2f}s"
         )
+        print(row_str)
 
-# ==========================================
-# Helpers for Intersection Tests
-# ==========================================
-
-def _get_3sphere_constraints(x, y, z):
-    return [
-        (x - 3)**2 + (y - 3)**2 + (z - 3)**2 <= 4,
-        (x - 4)**2 + (y - 4)**2 + (z - 4)**2 <= 4,
-        (x - 3)**2 + (y - 4)**2 + (z - 4)**2 <= 4
-    ]
-
-def _check_3sphere_constraints(x, y, z):
-    return (
-        ((x - 3)**2 + (y - 3)**2 + (z - 3)**2 <= 4) and
-        ((x - 4)**2 + (y - 4)**2 + (z - 4)**2 <= 4) and
-        ((x - 3)**2 + (y - 4)**2 + (z - 4)**2 <= 4)
-    )
 
 # ==========================================
 # Helpers for Intersection Tests
