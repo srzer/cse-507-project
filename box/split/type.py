@@ -4,14 +4,11 @@ from typing_extensions import Self
 
 from objective import Rational, eval_gradient
 
-from box import BoxN
+from box.box_type import BoxN
 from objective.polynomial_type import unit
 
+
 # NOTE: rewrite these as Box methods using mixins?
-
-
-# TODO: create splitting heuristsics class to choose
-# and plug-in different splits
 class BoxSplit(ABC):
     def _default_objective(self: Self, n: int) -> Rational:
         return Rational(unit(n), unit(n))
@@ -26,12 +23,20 @@ class BoxSplit(ABC):
 
 class SplitLongestSide(BoxSplit):
     def _run(self: Self, box: BoxN, obj: Rational) -> Tuple[BoxN, BoxN]:
-        return _split_on_longest(box)
+        return _bisect_on_longest(box)
 
 
 class SplitGradient(BoxSplit):
     def _run(self: Self, box: BoxN, obj: Rational) -> Tuple[BoxN, BoxN]:
         return _split_by_gradient(obj, box)
+
+
+# bisect on random dimension
+def _bisect_random(box: BoxN) -> Tuple[BoxN, BoxN]: ...
+
+
+# random split on random dimension
+def _split_random(box: BoxN) -> Tuple[BoxN, BoxN]: ...
 
 
 # TODO: improve function doc
@@ -50,7 +55,7 @@ def _split_by_gradient(f: Rational, box: BoxN) -> Tuple[BoxN, BoxN]:
 
 
 # split on longest dimension
-def _split_on_longest(box: BoxN) -> Tuple[BoxN, BoxN]:
+def _bisect_on_longest(box: BoxN) -> Tuple[BoxN, BoxN]:
     idx = box._max_side_idx()
     mid = box.center[idx]
 
