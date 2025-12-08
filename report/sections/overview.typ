@@ -1,6 +1,6 @@
-Our project explores a hybrid SMT-based approach for optimizing rational functions.
-By augmenting a traditional branch-and-bound algorithm with specialized heuristics for bounding and domain splitting,
-we have achieved better performance on this specific function class compared to a general-purpose solver strategy.
+// Our project explores a hybrid SMT-based approach for optimizing rational functions.
+// By augmenting a traditional branch-and-bound algorithm with specialized heuristics for bounding and domain splitting,
+// we have achieved better performance on this specific function class compared to a general-purpose solver strategy.
 
 If we have a way to determine satisfiability of a set of constraints, we also have a way to perform optimization:
 To minimize a function $f(x)$ subject to constraints $g_i (x)$ on a given box domain,
@@ -8,13 +8,6 @@ we can repeatedly check the satisfiability of the system $f(x) <= C$ together wi
 If this system is satisfiable, we know the optimal solution is at most $C$, and if it is not satisfiable then the optimal solution is at least $C$.
 Therefore if we start with a known lower bound on the value of $f(x)$ and a known feasible solution (to get an upper bound on the minimum),
 then using a binary search will efficiently converge to the solution of the optimization problem. Using this strategy, dReal can solve optimization problems.
-
-#block(above: -1em)[
-#figure(
-  image("../renders/examples_2.png", width: 80%),
-  caption: [Search space renders: hand-written case, Singular Edge and Rational Bowl.
-  ]
-) <fig:sample_problem_renders>]
 
 We can hope to make this more efficient by performing this bounding of $f(x)$ simultaneously to our branch-and-prune optimization procedure.
 Interval arithmetic on $f(x)$ will give us an initial lower bound on $f(x)$.
@@ -25,6 +18,13 @@ Using interval arithmetic, we can find a lower bound for $f(x)$ on a given box, 
 then we know $f(x)$ will not be optimized within this box and we can prune the entire box.
 Eventually we will explore the entire feasible domain and be left with small feasible regions where $f(x)$ is smallest.
 Having reduced the problem to small boxes, it is then efficient to find the minimum of $f(x)$ on each of these boxes directly using the method described above, as implemented in dReal.
+
+// maybe including a figure here to keep things interesting
+#figure(
+  image("../renders/examples_2.png", width: 90%),
+  caption: [From left to right: hand-written example, Singular Edge, and Rational Bowl optimization search space renders.
+  ],
+) <fig:sample_problem_renders>
 
 Our goal is to see if this approach can outperform dReal’s approach to optimization.
 In particular, we considered rational functions in several variables, and hoped to optimize the procedure for this specific class of functions.
@@ -37,10 +37,9 @@ however the method of Bernstein polynomials interfaces well with subdividing alo
 We apply this method separately on the numerator and denominator of our objective function and then use naive interval arithmetic to bound the resulting ratio, which results in an inexact bound.
 
 === Affine Arithmetic
-Affine arithmetic is a method for obtaining an approximate interval bound on a polynomial.
-// and there is both a partial/first-order affine arithmetic and a full/higher-order affine arithmetic, the latter being more precise but involving more computation.
-// Bernstein polynomials are very technical, but the method of affine arithmetic 
-It can be illustrated simply by example: 
+Affine arithmetic is a method for obtaining an approximate interval bound on a polynomial,
+and there is both a partial/first-order affine arithmetic and a full/higher-order affine arithmetic, the latter being more precise but involving more computation.
+Bernstein polynomials are very technical, but the method of affine arithmetic can be illustrated simply by example.
 If our variables are constrained to the intervals $x in [2, 4]$ and $y [3,7]$, then we define auxiliary variables constrained to $[-1, 1]$,
 call them $e_1$ and $e_2$, so that $x = e_1 + 3$ and $y = 2 e_2 + 5$. This normalization allows us to handle dependencies;
 when we compute the interval for $x-x$ we compute $(e_1 + 3) - (e_1 + 3) = 0$.
