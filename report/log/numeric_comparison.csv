@@ -1,31 +1,31 @@
 problem,algorithm,runtime,bound
-Sanity Poly,SHGO,0.0988,0.0
-Sanity Poly,Diff. Evo.,0.0664,0.0
+Sanity Poly,SHGO,0.099,0.0
+Sanity Poly,Diff. Evo.,0.0749,0.0
 Sanity Poly,Dual Annealing,0.0137,0.0
 Sanity Rational,SHGO,0.0148,1.0
 Sanity Rational,Diff. Evo.,Error,Error
 Sanity Rational,Dual Annealing,Error,Error
 Rational Bowl,SHGO,0.0158,0.1
-Rational Bowl,Diff. Evo.,0.0633,0.1
-Rational Bowl,Dual Annealing,0.0134,0.1
-Himmelblau Ratio,SHGO,0.0185,0.0
-Himmelblau Ratio,Diff. Evo.,0.0762,0.0
-Himmelblau Ratio,Dual Annealing,0.0147,0.0
+Rational Bowl,Diff. Evo.,0.0602,0.1
+Rational Bowl,Dual Annealing,0.0133,0.1
+Himmelblau Ratio,SHGO,0.0187,0.0
+Himmelblau Ratio,Diff. Evo.,0.0794,0.0
+Himmelblau Ratio,Dual Annealing,0.015,0.0
 Split Islands,SHGO,Error,Error
-Split Islands,Diff. Evo.,0.0568,-2.866025
-Split Islands,Dual Annealing,0.0146,-2.687262
-Singularity Edge,SHGO,0.0155,1.0
-Singularity Edge,Diff. Evo.,0.0427,1.0
-Singularity Edge,Dual Annealing,0.0126,1.0
-Pole Avoidance,SHGO,0.0165,0.285714
-Pole Avoidance,Diff. Evo.,0.0425,0.285714
-Pole Avoidance,Dual Annealing,0.0132,0.285714
-Rational Valley,SHGO,0.0168,1.028971
-Rational Valley,Diff. Evo.,0.0403,1.028971
-Rational Valley,Dual Annealing,0.0132,1.028971
-Positive Islands,SHGO,0.0192,4.699673
-Positive Islands,Diff. Evo.,0.0515,3.25
-Positive Islands,Dual Annealing,0.0172,3.718128
+Split Islands,Diff. Evo.,0.061,-2.866025
+Split Islands,Dual Annealing,0.0159,-2.838396
+Singularity Edge,SHGO,0.0156,1.0
+Singularity Edge,Diff. Evo.,0.045,1.0
+Singularity Edge,Dual Annealing,0.0132,1.0
+Pole Avoidance,SHGO,0.0178,0.285714
+Pole Avoidance,Diff. Evo.,0.0448,0.285714
+Pole Avoidance,Dual Annealing,0.0134,0.285714
+Rational Valley,SHGO,0.019,1.028971
+Rational Valley,Diff. Evo.,0.0453,1.028971
+Rational Valley,Dual Annealing,0.0138,1.028971
+Positive Islands,SHGO,0.0176,4.699673
+Positive Islands,Diff. Evo.,0.0476,3.25
+Positive Islands,Dual Annealing,Error,Error
 Sparse Intersection,SHGO,Error,Error
-Sparse Intersection,Diff. Evo.,0.051,1.196757
-Sparse Intersection,Dual Annealing,0.0148,1.218817
+Sparse Intersection,Diff. Evo.,0.049,1.196756
+Sparse Intersection,Dual Annealing,0.0144,1.357615
