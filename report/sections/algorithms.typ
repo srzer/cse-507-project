@@ -1,12 +1,19 @@
 == Our Branch & Bound Algorithm
-Our general algorithmic idea is a branch-and-prune approach, as inspired by dReal:
-Given the initial box constraint, we will first perform interval arithmetic to obtain bounds on the constraint functions to determine whether the constraints are potentially feasible.
-If not, it returns UNSAT. Otherwise, it subdivides the box into smaller boxes and repeats the procedure on each sub-box:
-If a sub-box is determined to be infeasible based on the interval arithmetic bounds, it is not explored further, it is pruned.
-Otherwise, the sub-box is again subdivided into smaller boxes. Interval arithmetic gives imperfect bounds on a function,
-but subdividing to smaller boxes with tighter interval constraints usually results in more precise bounds, which is the advantage of subdividing.
-We will continue to either prune or subdivide until the box size is so small that the constraint functions vary by less than $delta$ within the small box,
-at which point the function value is determined on that box within $delta$ precision. Now we present how we improved the vanilla idea through implementing new techniques as below.
+Our algorithm follows a branch-and-prune strategy inspired by dReal.
+
+Starting from the initial box constraint, we use interval arithmetic to bound the constraint functions
+and determine whether the box may contain feasible points. If the box is infeasible, we return UNSAT.
+Otherwise, we subdivide the box and apply the same procedure recursively.
+
+Any sub-box that is proven infeasible by interval arithmetic is pruned.
+Sub-boxes that remain feasible are further subdivided.
+Although interval arithmetic provides loose bounds, working on smaller boxes tightens these bounds
+and makes the feasibility test more accurate.
+
+This process continues until each box becomes sufficiently small so that the constraint functions vary
+by less than $δ$ inside the box. At that point, the function value on the box is determined within $δ$ precision.
+Below, we describe how we enhance this basic framework with several additional techniques.
+
 
 === Objectives
 Our main focus will be rational objective optimization with constraints.
@@ -33,7 +40,7 @@ The approach 1 is to use dreal’s Minimize to directly obtain a lower bound,
 note that the box is smaller than the whole original box, so it is still efficient;
 the approach 2 is to invoke an iterative splitting process to obtain a lower bound on this box using affine method.
 
-=== Step 3. Splitting
+=== Step 3. Splitting heuristic
 If the box is only partially feasible, the algorithm simply splits it into two smaller boxes and continues processing.
 Beyond simply splitting the longest edge into half, which is the default implementation, we implemented a gradient-guided splitting heuristic,
-which calculates the gradient direction of the objective to optimize, and then selects the edge which best aligns the direction of the gradient.
+which calculates the gradient direction of the objective to optimize, and then selects the edge which best aligns gradient direction.

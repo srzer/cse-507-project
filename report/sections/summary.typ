@@ -5,21 +5,21 @@ Performance differences may derive from the structure of the search space.
 Our method works well on some problems, due to our specialization on rational functions.
 On other problems, dReal stood out compared with all other surveyed methods.
 
-On Pole Avoidance in @fig:problem_runtime_pole_avoidance:
+On Pole Avoidance in Figure @fig:problem_runtime_pole_avoidance:
 The objective function is $1 \/ (x + y + z - 2.5)$ on a simple box.
 This function is monotonic and smooth over the entire feasible region.
 The gradient provides a very strong and consistent signal that our branch-and-bound algorithm can use effectively to quickly prune large parts of the space and converge on the minimum without much wasted effort.
 
 
 #figure(
-  image("../renders/full_comparison_Pole_Avoidance.svg", width: 110%),
-  caption: [Plot of runtime performance for Pole Avoidance.
-    Our method is significantly faster than the baseline (normalized runtime is very low, around 0.01-0.02x the baseline time)
+  image("../renders/full_comparison_Pole_Avoidance.svg", width: 100%),
+  caption: [Plot of runtime for Pole Avoidance.
+    Our method is significantly faster than the baseline (normalized runtime is very low, around 0.01-0.02x the baseline)
     and numeric optimizations and finds a slightly better (lower) bound.
   ],
 ) <fig:problem_runtime_pole_avoidance>
 
-On Positive Islands in @fig:problem_runtime_dreal_outlier:
+On Positive Islands in Figure @fig:problem_runtime_dreal_outlier:
 Positive Islands The objective function is a simple polynomial $x^2 + 1$,
 but the feasible region consists of two small, disconnected spheres in the middle of a very large search box.
 Our algorithm likely struggles here because it has to spend the vast majority of its time subdividing a large, empty, infeasible space just to find the two tiny islands where solutions exist.
@@ -28,12 +28,12 @@ which would explain why our method is comparatively slower on this specific prob
 
 #subfigure(
   figure(
-    image("../renders/full_comparison_Positive_Islands.svg", width: 110%),
+    image("../renders/full_comparison_Positive_Islands.svg", width: 100%),
     caption: [Positive islands runtime performance.],
   ),
   <fig:problem_runtime_positive_islands>,
   figure(
-    image("../renders/full_comparison_Singularity_Edge.svg", width: 110%),
+    image("../renders/full_comparison_Singularity_Edge.svg", width: 100%),
     caption: [Singularity edge runtime performance],
   ),
   <fig:problem_runtime_singularity_edge>,
@@ -50,20 +50,20 @@ which would explain why our method is comparatively slower on this specific prob
 
 === Aggregate Runtime Performance
 
-Overall, our method
+// Overall, our method
 #figure(
-  image("../renders/aggregate_normalized_runtime.svg", width: 110%),
+  image("../renders/aggregate_normalized_runtime.svg", width: 90%),
   caption: [Plot of aggregate runtime performance across testing suite.],
 ) <fig:aggregate_runtime>
 
 #figure(
-  image("../renders/full_aggregate_normalized_runtime.svg", width: 110%),
+  image("../renders/full_aggregate_normalized_runtime.svg", width: 90%),
   caption: [Plot of aggregate runtime performance across testing suite with standard numeric optimization methods.],
 ) <fig:aggregate_runtime_numeric>
 
 
 #figure(
-  image("../renders/full_aggregate_bound_difference.svg", width: 110%),
+  image("../renders/full_aggregate_bound_difference.svg", width: 90%),
   caption: [Plot of aggregate bound difference across testing suite.
     Note that the gradient-split and affine-bound heursitic combination has been ommitted as it tended to produce much larger (and incorrect) bounds on many problems.
     Dual annealing has been ommitted for a similar reason.],
@@ -77,7 +77,7 @@ Overall, our method
 We discovered that the affine bounding heuristic can perform rapid minimization, but the heuristic alone is insufficient to uncover the actual minimum.
 We consider the following problem.
 #figure(
-  image("../renders/full_comparison_Split_Islands.svg", width: 110%),
+  image("../renders/full_comparison_Split_Islands.svg", width: 100%),
   caption: [Plot of runtime performance for Split Islands. The algorithms with the affine interval bounding heuristic terminate quickly,
     but with the incorrect lower bound.],
 ) <fig:problem_runtime_split_islands>
@@ -88,12 +88,12 @@ The following plots demonstrate a coupling between our method and dReal with res
 
 #subfigure(
   figure(
-    image("../renders/full_comparison_Rational_Valley.svg", width: 110%),
+    image("../renders/full_comparison_Rational_Valley.svg", width: 100%),
     caption: [Rational valley runtime performance.],
   ),
   <fig:problem_runtime_rational_valley>,
   figure(
-    image("../renders/full_comparison_Sanity_Poly.svg", width: 110%),
+    image("../renders/full_comparison_Sanity_Poly.svg", width: 100%),
     caption: [Sanity poly runtime performance],
   ),
   <fig:problem_runtime_sanity_poly>,
