@@ -12,7 +12,7 @@ The gradient provides a very strong and consistent signal that our branch-and-bo
 
 
 #figure(
-  image("../renders/full_comparison_Pole_Avoidance.svg", width: 60%),
+  image("../renders/full_comparison_Pole_Avoidance.svg", width: 110%),
   caption: [Plot of runtime performance for Pole Avoidance.
     Our method is significantly faster than the baseline (normalized runtime is very low, around 0.01-0.02x the baseline time)
     and numeric optimizations and finds a slightly better (lower) bound.
@@ -27,10 +27,13 @@ The dReal baseline method might be more efficient at handling these kinds of dis
 which would explain why our method is comparatively slower on this specific problem.
 
 #subfigure(
-  figure(image("../renders/full_comparison_Positive_Islands.svg"), caption: [Positive islands runtime performance.]),
+  figure(
+    image("../renders/full_comparison_Positive_Islands.svg", width: 110%),
+    caption: [Positive islands runtime performance.],
+  ),
   <fig:problem_runtime_positive_islands>,
   figure(
-    image("../renders/full_comparison_Singularity_Edge.svg"),
+    image("../renders/full_comparison_Singularity_Edge.svg", width: 110%),
     caption: [Singularity edge runtime performance],
   ),
   <fig:problem_runtime_singularity_edge>,
@@ -46,12 +49,12 @@ which would explain why our method is comparatively slower on this specific prob
 
 
 #figure(
-  image("../renders/aggregate_normalized_runtime.svg", width: 90%),
+  image("../renders/aggregate_normalized_runtime.svg", width: 110%),
   caption: [Plot of aggregate runtime performance across testing suite.],
 ) <fig:aggregate_runtime>
 
 #figure(
-  image("../renders/full_aggregate_normalized_runtime.svg", width: 90%),
+  image("../renders/full_aggregate_normalized_runtime.svg", width: 110%),
   caption: [Plot of aggregate runtime performance across testing suite with standard numeric optimization methods.],
 ) <fig:aggregate_runtime_numeric>
 
@@ -59,7 +62,7 @@ which would explain why our method is comparatively slower on this specific prob
 // todo: make these subfigures
 
 #figure(
-  image("../renders/full_aggregate_bound_difference.svg", width: 90%),
+  image("../renders/full_aggregate_bound_difference.svg", width: 110%),
   caption: [Plot of aggregate bound difference across testing suite.
     Note that the gradient-split and affine-bound heursitic combination has been ommitted as it tended to produce much larger (and incorrect) bounds on many problems.
     Dual annealing has been ommitted for a similar reason.],

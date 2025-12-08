@@ -35,7 +35,7 @@
   // journal: "UW CSE 507",
   abstract: abstract,
   keywords: ("interval arithmetic", "SMT", "Bernstein", "affine interval from", "dReal"),
-  format: "3p",
+  format: "5p",
   // line-numbering: true,
 )
 
