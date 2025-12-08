@@ -38,7 +38,7 @@ and there is both a partial/first-order affine arithmetic and a full/higher-orde
 Bernstein polynomials are very technical, but the method of affine arithmetic can be illustrated simply by example.
 If our variables are constrained to the intervals $x in [2, 4]$ and $y [3,7]$, then we define auxiliary variables constrained to $[-1, 1]$,
 call them $e_1$ and $e_2$, so that $x = e_1 + 3$ and $y = 2 e_2 + 5$. This normalization allows us to handle dependencies;
-when we compute the interval for $x -$x we compute $(e_1 + 3) - (e_1 + 3) = 0$.
+when we compute the interval for $x-x$ we compute $(e_1 + 3) - (e_1 + 3) = 0$.
 The purpose of normalizing to $[-1, 1]$ is so that products of these auxiliary variables are again variables lying in $[-1, 1]$.
 For instance, when applying affine arithmetic to the function $x y$ we will get a cross term with $e_1 e_2$.
 In the partial or first-order affine arithmetic, we would simply substitute in $-1$ or $1$ here when computing extreme values.
