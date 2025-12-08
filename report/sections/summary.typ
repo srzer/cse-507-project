@@ -10,12 +10,13 @@ The objective function is $1 \/ (x + y + z - 2.5)$ on a simple box.
 This function is monotonic and smooth over the entire feasible region.
 The gradient provides a very strong and consistent signal that our branch-and-bound algorithm can use effectively to quickly prune large parts of the space and converge on the minimum without much wasted effort.
 
+Our method is significantly faster than the baseline (normalized runtime is fast, around 0.01-0.02x the baseline time)
+and numeric optimizations and finds a slightly better lower bound.
 
 #figure(
   image("../renders/full_comparison_Pole_Avoidance.svg", width: 110%),
-  caption: [Plot of runtime performance for Pole Avoidance.
-    Our method is significantly faster than the baseline (normalized runtime is very low, around 0.01-0.02x the baseline time)
-    and numeric optimizations and finds a slightly better (lower) bound.
+  caption: [Pole Avoidance runtime.
+    All of our methods shine. Due for further exploration.
   ],
 ) <fig:problem_runtime_pole_avoidance>
 
@@ -29,22 +30,25 @@ which would explain why our method is comparatively slower on this specific prob
 #subfigure(
   figure(
     image("../renders/full_comparison_Positive_Islands.svg", width: 110%),
-    caption: [Positive islands runtime performance.],
+    caption: [Positive Islands runtime.],
   ),
   <fig:problem_runtime_positive_islands>,
   figure(
     image("../renders/full_comparison_Singularity_Edge.svg", width: 110%),
-    caption: [Singularity edge runtime performance],
+    caption: [Singularity Edge runtime.],
   ),
   <fig:problem_runtime_singularity_edge>,
   columns: (1fr, 1fr),
-  caption: [(a) On certain problems, dReal defeats all other methods with marginal error.
-    Our method is much slower than the dReal baseline (normalized runtime is around 6-7x slower the baseline time) while finding a similar bound.
-    This is also the case for numeric optimizers. SHGO and Dual Annealing get the wrong answer.
-    (b) On other problems, our method is able to match standard numerical optimization performance.
+  caption: [(a) dReal defeats all other methods with marginal error.
+    SHGO and Dual Annealing get the wrong answer.
+    (b) Our method is able to match standard numerical optimization performance.
+
   ],
   label: <fig:problem_runtime_dreal_outlier>,
 )
+
+In @fig:problem_runtime_positive_islands, our method is much slower than the dReal baseline (normalized runtime is around 6-7x slower the baseline time) while finding a similar bound.
+This is also the case for numeric optimizers.
 
 
 
