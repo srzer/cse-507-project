@@ -16,12 +16,14 @@
   Optimizing positive rational functions $RR^n -> RR$ with polynomial inequality constraints using interval arithmetic,
   affine interval representations, Bernstein polynomial form, and branch-and-bound methods.
   Our source code is available at https://github.com/srzer/cse-507-project
+
+  THIS IS NOT THE FINAL REPORT; WE ARE GOING TO EMAIL ASKING FOR MORE TIME \<3
+  Thank you for being flexible, work life balance does indeed apply, but not for finals? :3
 ]
 
 #show: elsearticle.with(
   title: "CSE 507 Project: Hybrid Numerical & SMT Optimization",
   authors: (
-    // a lipson, Jaedon Rich, Ruizhe Shi, Evan Wang
     (
       name: "Ruizhe Shi",
       affiliation: "University of Washington, Seattle, U.S.",
