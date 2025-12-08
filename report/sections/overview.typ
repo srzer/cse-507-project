@@ -1,3 +1,7 @@
+Our project explores a hybrid SMT-based approach for optimizing rational functions.
+By augmenting a traditional branch-and-bound algorithm with specialized heuristics for bounding and domain splitting,
+we have achieved better performance on this specific function class compared to a general-purpose solver strategy.
+
 If we have a way to determine satisfiability of a set of constraints, we also have a way to perform optimization:
 To minimize a function $f(x)$ subject to constraints $g_i (x)$ on a given box domain,
 we can repeatedly check the satisfiability of the system $f(x) <= C$ together with $g_i (x)$.
