@@ -2,8 +2,8 @@
 
 == Summary
 Performance differences may derive from the structure of the search space.
-Our method works well on some problems, perhaps due to our specialization on ration functions.
-On other problems, dReal an outlier compared with all other methods.
+Our method works well on some problems, due to our specialization on rational functions.
+On other problems, dReal stood out compared with all other surveyed methods.
 
 On Pole Avoidance in @fig:problem_runtime_pole_avoidance:
 The objective function is $1 \/ (x + y + z - 2.5)$ on a simple box.
@@ -48,6 +48,9 @@ which would explain why our method is comparatively slower on this specific prob
 
 
 
+=== Aggregate Runtime Performance
+
+Overall, our method
 #figure(
   image("../renders/aggregate_normalized_runtime.svg", width: 110%),
   caption: [Plot of aggregate runtime performance across testing suite.],
@@ -59,8 +62,6 @@ which would explain why our method is comparatively slower on this specific prob
 ) <fig:aggregate_runtime_numeric>
 
 
-// todo: make these subfigures
-
 #figure(
   image("../renders/full_aggregate_bound_difference.svg", width: 110%),
   caption: [Plot of aggregate bound difference across testing suite.
@@ -71,34 +72,40 @@ which would explain why our method is comparatively slower on this specific prob
 
 //TODO: would be great to get visualizations on each of the particular problem plots
 
-affine bounding heuristic can fail quickly
+== Design & Implementation Challenges
+
+We discovered that the affine bounding heuristic can perform rapid minimization, but the heuristic alone is insufficient to uncover the actual minimum.
+We consider the following problem.
 #figure(
-  image("../renders/full_comparison_Split_Islands.svg", width: 60%),
-  caption: [Plot of ],
+  image("../renders/full_comparison_Split_Islands.svg", width: 110%),
+  caption: [Plot of runtime performance for Split Islands. The algorithms with the affine interval bounding heuristic terminate quickly,
+    but with the incorrect lower bound.],
 ) <fig:problem_runtime_split_islands>
 
-Numerical methods sometimes outperform solver-aided ones
+
+For some problems, numerical methods outperform solver-aided ones.
+The following plots demonstrate a coupling between our method and dReal with respect to runtime performance on the Rational Valley and Sanity Poly problems.
+
 #subfigure(
-  figure(image("../renders/full_comparison_Rational_Valley.svg"), caption: [Rational valley runtime performance.]),
+  figure(
+    image("../renders/full_comparison_Rational_Valley.svg", width: 110%),
+    caption: [Rational valley runtime performance.],
+  ),
   <fig:problem_runtime_rational_valley>,
   figure(
-    image("../renders/full_comparison_Sanity_Poly.svg"),
+    image("../renders/full_comparison_Sanity_Poly.svg", width: 110%),
     caption: [Sanity poly runtime performance],
   ),
   <fig:problem_runtime_sanity_poly>,
   columns: (1fr, 1fr),
-  caption: [(a) On certain problems, dReal defeats all other methods with marginal error.
-    (b) On other problems, our method is able to match standard numerical optimization performance.
+  caption: [(a) On certain problems, solvers have a difficult time.
+    (b) On others, the numerical methods suffer.
+    All optimizers agree on the lower bound for both problems.
   ],
   label: <fig:problem_runtime_numeric_comparison>,
 )
 
-
-== Design & Implementation Challenges
-
-
-
-== Selecting Bencmarks
+=== Selecting Bencmarks
 
 We collected sample benchmarks to form our test suite from Wikipedia. #footnote[https://en.wikipedia.org/wiki/Test_functions_for_optimization]
 We currently have tests for:
@@ -106,7 +113,9 @@ Sanity Poly, Sanity Rational, Rational Bowl, Rational Valley, Split Islands, Pos
 
 == Improvement Areas
 
-Adaptive Heuristics:
+We have several areas in which to improve our branch-and-bound method.
+
+=== Adaptive Heuristics
 Our results show that some heuristic combinations are fast but coarse, while others are slow but precise.
 We could define transition conditions from one splitting and bounding combo to another.
 #footnote[These conditions would be another heuristic themselves. We might wish to avoid second order heuristics.]
@@ -115,7 +124,7 @@ This would rapidly discard large regions of the search space and establish an in
 Once the rate of improvement slows down or the total volume of the active search boxes falls below a threshold,
 the algorithm could switch to a refining phase, using a more expensive but precise heuristic like the Bernstein bounds and gradient split to zero in on the true minimum.
 
-Advanced Box Splitting Strategies:
+=== Advanced Box Splitting Strategies
 The current project uses bisecting on the longest box side which is ignorant to function behaviour,
 and splitting in the direction of greatest change in the objective function, gradient split.
 There's a rich area of research here that could yield significant performance gains.
@@ -126,7 +135,7 @@ We could implement a maximal smear splitter. For each dimension of a box, it wou
 It would then split the box along the dimension that produces the widest range, as this is often where the most progress can be made in tightening the bounds.
 This could be particularly effective on problems like Rational Valley, where the function's behavior is complex and not well-aligned with the box's geometry.
 
-Ordering Hybrid SMT and Numerical Methods.
+=== Ordering Hybrid SMT and Numerical Methods
 We treat the SMT and numerical methods as separate categories for comparison, but their strengths are complementary.
 Our hybrid approach of refining the search space early with numerical methods before making calls to dReal aims to be more powerful than either technique alone.
 However, dReal does have similar baked-in optimizations itself, and is not purely an SMT tool.

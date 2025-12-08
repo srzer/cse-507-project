@@ -1,4 +1,3 @@
-
 There are two key elements to introduce: Interval Arithmetic and the dReal SMT solver. @gao2013dreal
 Given a collection of variables $x_j$ whose values are each constrained to given intervals $I_j = [a_j, b_j]$, the problem of interval arithmetic is determining the most precise interval to which some arithmetic combination of these variables are constrained. For instance, given $x$ and $y$, both constrained to the interval $[0, 1]$, we can say that $x + y$ is constrained to the interval $[0, 2]$ and $x - y$ is constrained to the interval $[-1, 1]$.
 Complications emerge when there are dependencies between our variables;
