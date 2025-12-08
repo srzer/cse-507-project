@@ -10,12 +10,13 @@ The objective function is $1 \/ (x + y + z - 2.5)$ on a simple box.
 This function is monotonic and smooth over the entire feasible region.
 The gradient provides a very strong and consistent signal that our branch-and-bound algorithm can use effectively to quickly prune large parts of the space and converge on the minimum without much wasted effort.
 
+Our method is significantly faster than the baseline (normalized runtime is fast, around 0.01-0.02x the baseline time)
+and numeric optimizations and finds a slightly better lower bound.
 
 #figure(
   image("../renders/full_comparison_Pole_Avoidance.svg", width: 100%),
-  caption: [Plot of runtime for Pole Avoidance.
-    Our method is significantly faster than the baseline (normalized runtime is very low, around 0.01-0.02x the baseline)
-    and numeric optimizations and finds a slightly better (lower) bound.
+  caption: [Pole Avoidance runtime.
+    All of our methods shine. Due for further exploration.
   ],
 ) <fig:problem_runtime_pole_avoidance>
 
@@ -38,35 +39,44 @@ which would explain why our method is comparatively slower on this specific prob
   ),
   <fig:problem_runtime_singularity_edge>,
   columns: (1fr, 1fr),
-  caption: [(a) On certain problems, dReal defeats all other methods with marginal error.
-    Our method is much slower than the dReal baseline (normalized runtime is around 6-7x slower the baseline time) while finding a similar bound.
-    This is also the case for numeric optimizers. SHGO and Dual Annealing get the wrong answer.
-    (b) On other problems, our method is able to match standard numerical optimization performance.
+  caption: [(a) dReal defeats all other methods with marginal error.
+    SHGO and Dual Annealing get the wrong answer.
+    (b) Our method is able to match standard numerical optimization performance.
+
   ],
   label: <fig:problem_runtime_dreal_outlier>,
 )
+
+In @fig:problem_runtime_positive_islands, our method is much slower than the dReal baseline (normalized runtime is around 6-7x slower the baseline time) while finding a similar bound.
+This is also the case for numeric optimizers.
 
 
 
 === Aggregate Runtime Performance
 
-// Overall, our method
 #figure(
   image("../renders/aggregate_normalized_runtime.svg", width: 90%),
-  caption: [Plot of aggregate runtime performance across testing suite.],
+  caption: [Aggregate runtime performance across testing suite.
+    Splitting on longest box side yielded a faster median than baseline.],
 ) <fig:aggregate_runtime>
+
+We now consider the aggregate of runtimes across the testing suite.
+Our method outperformed the dReal baseline in speed, but generally found smaller lower bounds.
 
 #figure(
   image("../renders/full_aggregate_normalized_runtime.svg", width: 90%),
-  caption: [Plot of aggregate runtime performance across testing suite with standard numeric optimization methods.],
+  caption: [Plot of aggregate runtime performance across testing suite with standard numeric optimization methods.
+    Note that the order methods differs from @fig:aggregate_runtime.
+    All numerical methods have a faster median runtime.],
 ) <fig:aggregate_runtime_numeric>
 
+However, runtime cannot be considered in isolation of the actual derived bound.
+We see that all surveyed methods tend to find a smaller mininum than the dReal baseline, which happens to be incorrect for some of the problems.
 
 #figure(
   image("../renders/full_aggregate_bound_difference.svg", width: 90%),
-  caption: [Plot of aggregate bound difference across testing suite.
-    Note that the gradient-split and affine-bound heursitic combination has been ommitted as it tended to produce much larger (and incorrect) bounds on many problems.
-    Dual annealing has been ommitted for a similar reason.],
+  caption: [Normalized aggregate bound difference across testing suite.
+  ],
 ) <fig:aggregate_bound_numeric>
 
 
@@ -75,11 +85,11 @@ which would explain why our method is comparatively slower on this specific prob
 == Design & Implementation Challenges
 
 We discovered that the affine bounding heuristic can perform rapid minimization, but the heuristic alone is insufficient to uncover the actual minimum.
-We consider the following problem.
+We consider the following Split Islands problem.
+The algorithms with the affine interval bounding heuristic terminate quickly, but with the incorrect lower bound.
 #figure(
-  image("../renders/full_comparison_Split_Islands.svg", width: 100%),
-  caption: [Plot of runtime performance for Split Islands. The algorithms with the affine interval bounding heuristic terminate quickly,
-    but with the incorrect lower bound.],
+  image("../renders/full_comparison_Split_Islands.svg", width: 90%),
+  caption: [Runtime for Split Islands.],
 ) <fig:problem_runtime_split_islands>
 
 
