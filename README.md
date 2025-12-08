@@ -30,8 +30,8 @@ We also define a minimal box size, which is, by default, the as same as our erro
 
 Box feasibility sampling heuristics
 - completely sound
-- grid (with some density)
-- random (with some seed?)
+- grid (with some density) (WIP)
+- random (with some seed?) (WIP)
 
 Box slicing heuristics 
 - bisect on random dimension
@@ -40,11 +40,7 @@ Box slicing heuristics
 
 ### Logging
 
-- compare runtime & lower bound
-
-- plot lower bound by iterations 
-
-
+The main script logs the runtime and lower bound of the algorithms on the test suite.
 
 ## Known Limitations
 
@@ -105,7 +101,7 @@ docker compose run --rm --entrypoint bash dreal
 This container includes:
 - Ubuntu 22.04 base
 - dReal (v4.21.06.2) binaries
-- Python 3 with dreal package
+- Python 3 with dreal and other packages in `requirements.txt`
 
 #### dReal Python Package
 

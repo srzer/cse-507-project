@@ -15,6 +15,13 @@ then we know $f(x)$ will not be optimized within this box and we can prune the e
 Eventually we will explore the entire feasible domain and be left with small feasible regions where $f(x)$ is smallest.
 Having reduced the problem to small boxes, it is then efficient to find the minimum of $f(x)$ on each of these boxes directly using the method described above, as implemented in dReal.
 
+// maybe including a figure here to keep things interesting
+#figure(
+  image("../renders/examples_2.png", width: 90%),
+  caption: [From left to right: hand-written example, Singular Edge, and Rational Bowl optimization search space renders.
+  ],
+) <fig:sample_problem_renders>
+
 Our goal is to see if this approach can outperform dReal’s approach to optimization.
 In particular, we considered rational functions in several variables, and hoped to optimize the procedure for this specific class of functions.
 In addition to the use of dReal, our approach drew heavily from two previous techniques: Bernstein polynomials and affine arithmetic.
