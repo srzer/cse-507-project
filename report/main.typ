@@ -14,11 +14,11 @@
 
 #let abstract = [
   Optimizing positive rational functions $RR^n -> RR$ with polynomial inequality constraints using interval arithmetic,
-  affine interval representations, Bernstein polynomial form, and branch-and-bound methods.
+  affine method, Bernstein method, and branch-and-bound methods.
   Our source code is available at https://github.com/srzer/cse-507-project
 
-  THIS IS NOT THE FINAL REPORT; WE ARE GOING TO EMAIL ASKING FOR MORE TIME \<3
-  Thank you for being flexible, work life balance does indeed apply, but not for finals? :3
+  // THIS IS NOT THE FINAL REPORT; WE ARE GOING TO EMAIL ASKING FOR MORE TIME \<3
+  // Thank you for being flexible, work life balance does indeed apply, but not for finals? :3
 ]
 
 #show: elsearticle.with(
@@ -34,7 +34,7 @@
   ),
   // journal: "UW CSE 507",
   abstract: abstract,
-  keywords: ("interval arithmetic", "SMT", "Bernstein", "affine interval from", "dReal"),
+  keywords: ("interval arithmetic", "affine interval form", "SMT", "dReal"),
   format: "5p",
   // line-numbering: true,
 )

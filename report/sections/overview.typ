@@ -19,7 +19,7 @@ Our goal is to see if this approach can outperform dReal’s approach to optimiz
 In particular, we considered rational functions in several variables, and hoped to optimize the procedure for this specific class of functions.
 In addition to the use of dReal, our approach drew heavily from two previous techniques: Bernstein polynomials and affine arithmetic.
 
-=== Bernstein Polynomiial Form
+=== Bernstein Polynomial Form
 Bernstein polynomials give an algorithm for computing exact upper and lower bounds on a given polynomial.
 It is computationally expensive to compute the initial bounds,
 however the method of Bernstein polynomials interfaces well with subdividing along boxes so that subsequent refined bounds are more efficient to compute.
@@ -37,42 +37,9 @@ For instance, when applying affine arithmetic to the function $x y$ we will get 
 In the partial or first-order affine arithmetic, we would simply substitute in $-1$ or $1$ here when computing extreme values.
 In higher-order affine arithmetic, these cross terms are replaced with new auxiliary variables, and then again dependencies between different instances of these cross terms can be tracked.
 
-== Our Branch & Bound Algorithm
-Our general algorithmic idea is a branch-and-prune approach, which is inspired by dReal:
-Given the initial box constraint, it will perform interval arithmetic to obtain bounds on the constraint functions to determine whether the constraints are potentially feasible.
-If not, it returns UNSAT. Otherwise, it subdivides the box into smaller boxes and repeats the procedure on each sub-box:
-If a sub-box is determined to be infeasible based on the interval arithmetic bounds, it is not explored further, it is pruned.
-Otherwise, the sub-box is again subdivided into smaller boxes. Interval arithmetic gives imperfect bounds on a function,
-but subdividing to smaller boxes with tighter interval constraints usually results in more precise bounds, which is the advantage of subdividing.
-dReal will continue to either prune or subdivide until the box size is so small that the constraint functions vary by less than $delta$ within the small box,
-at which point the function value is determined on that box within $delta$ precision. Now we present how we improved the vanilla idea through implementing new techniques as below.
-
-=== Objectives
-Our main focus will be rational objective optimization with constraints.
-The rational objective function $f(x) = p(x)\/q(x)$ is represented by two lists of terms: the numerator terms $[ [c_i, e_i], dots ]$,
-and the denominator terms $[ [d_j, g_j], dots ]$. For example, if the objective is $f(x, y) = (2x^2 y + 3y^2) \/ (x^2 + y)$,
-then we have the numerator terms as $[ [2, [2,1]], [3, [0,2]] ]$, and the denominator terms as $[ [1, [2,0]], [1, [0,1]] ]$.
-
-=== Step 0. Initialization
-The algorithm begins with an initial search box that is assumed to contain all feasible solutions and does not include any poles of the rational function.
-A minimal box size is also defined, usually equal to the numerical tolerance used by dReal (for example, `1e-3`).
-The global lower bound is initialized, and the initial box is pushed into a queue of boxes to process.
-
-=== Step 1. Basic pruning
-For each box, the algorithm first applies a pruning step using the affine method (we’ve also tried Bernstein method, which turns out to be efficient in $n=3$ case,
-but inefficient for larger dimensions) to estimate a rough lower bound of the objective function on that box.
-If this rough bound is already worse than the current global lower bound, the box is discarded without further work.
-Otherwise, the algorithm asks dReal to search for a feasible point inside the box that improves the current lower bound by at least a small threshold.
-If dReal reports that no such point exists, the box is discarded. If a better point is found, the global lower bound is updated.
-
-=== Step 2. Handling full feasibility
-If the box is already smaller than the minimal box size, it is skipped. Otherwise, the algorithm uses dReal to check whether the entire box is feasible.
-If it is fully feasible, then we provide two approaches to handle this.
-The approach 1 is to use dreal’s Minimize to directly obtain a lower bound,
-note that the box is smaller than the whole original box, so it is still efficient;
-the approach 2 is to invoke an iterative splitting process to obtain a lower bound on this box using affine method.
-
-=== Step 3. Splitting
-If the box is only partially feasible, the algorithm simply splits it into two smaller boxes and continues processing.
-Beyond simply splitting the longest edge into half, which is the default implementation, we implemented a gradient-guided splitting heuristic,
-which calculates the gradient direction of the objective to optimize, and then selects the edge which best aligns the direction of the gradient.
+=== dReal Algorithm Overview
+The dReal solver implements this relaxation to obtain a $delta$-complete algorithm for determining satisfiability:
+If there is a solution to system of inequalities in the given bounded domain up to a tolerance of $delta$,
+then dReal will find it; if there is no solution, dReal returns UNSAT.
+Notice that if there is no solution up to a tolerance of $delta$, then there is also no solution to the exact original problem.
+The complexity class is PSPACE, but in practice dReal performs very well.

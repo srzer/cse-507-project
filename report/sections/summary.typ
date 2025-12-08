@@ -94,7 +94,7 @@ Numerical methods sometimes outperform solver-aided ones
 )
 
 
-== Design & Implementation Challenges
+// == Design & Implementation Challenges
 
 
 
@@ -104,36 +104,36 @@ We collected sample benchmarks to form our test suite from Wikipedia. #footnote[
 We currently have tests for:
 Sanity Poly, Sanity Rational, Rational Bowl, Rational Valley, Split Islands, Positive Islands, Singularity Edge, Pole Avoidance, Sparse Intersection, and also Himmelblau Ratio (but only for 3D).
 
-== Improvement Areas
+// == Improvement Areas
 
-Adaptive Heuristics:
-Our results show that some heuristic combinations are fast but coarse, while others are slow but precise.
-We could define transition conditions from one splitting and bounding combo to another.
-#footnote[These conditions would be another heuristic themselves. We might wish to avoid second order heuristics.]
-For example, an adaptive solver could begin with a prospecting phase using a fast heuristic like affine bounds with longest side bisect splitting.
-This would rapidly discard large regions of the search space and establish an initial upper bound on the global minimum.
-Once the rate of improvement slows down or the total volume of the active search boxes falls below a threshold,
-the algorithm could switch to a refining phase, using a more expensive but precise heuristic like the Bernstein bounds and gradient split to zero in on the true minimum.
+// Adaptive Heuristics:
+// Our results show that some heuristic combinations are fast but coarse, while others are slow but precise.
+// We could define transition conditions from one splitting and bounding combo to another.
+// #footnote[These conditions would be another heuristic themselves. We might wish to avoid second order heuristics.]
+// For example, an adaptive solver could begin with a prospecting phase using a fast heuristic like affine bounds with longest side bisect splitting.
+// This would rapidly discard large regions of the search space and establish an initial upper bound on the global minimum.
+// Once the rate of improvement slows down or the total volume of the active search boxes falls below a threshold,
+// the algorithm could switch to a refining phase, using a more expensive but precise heuristic like the Bernstein bounds and gradient split to zero in on the true minimum.
 
-Advanced Box Splitting Strategies:
-The current project uses bisecting on the longest box side which is ignorant to function behaviour,
-and splitting in the direction of greatest change in the objective function, gradient split.
-There's a rich area of research here that could yield significant performance gains.
-Additionally, it would be beneficial to compare our attempts at smart methods to merely random splitting.
-Another intelligent heuristic for non-linear functions could be to split where the function has the greatest measure,that is where it is changing the most.
-We could implement a maximal smear splitter. For each dimension of a box, it would calculate the width of the objective function's range (its “smear”), an interval.
-#footnote[So, we could apply interval arithmetic SMT tools here.]
-It would then split the box along the dimension that produces the widest range, as this is often where the most progress can be made in tightening the bounds.
-This could be particularly effective on problems like Rational Valley, where the function's behavior is complex and not well-aligned with the box's geometry.
+// Advanced Box Splitting Strategies:
+// The current project uses bisecting on the longest box side which is ignorant to function behaviour,
+// and splitting in the direction of greatest change in the objective function, gradient split.
+// There's a rich area of research here that could yield significant performance gains.
+// Additionally, it would be beneficial to compare our attempts at smart methods to merely random splitting.
+// Another intelligent heuristic for non-linear functions could be to split where the function has the greatest measure,that is where it is changing the most.
+// We could implement a maximal smear splitter. For each dimension of a box, it would calculate the width of the objective function's range (its “smear”), an interval.
+// #footnote[So, we could apply interval arithmetic SMT tools here.]
+// It would then split the box along the dimension that produces the widest range, as this is often where the most progress can be made in tightening the bounds.
+// This could be particularly effective on problems like Rational Valley, where the function's behavior is complex and not well-aligned with the box's geometry.
 
-Ordering Hybrid SMT and Numerical Methods.
-We treat the SMT and numerical methods as separate categories for comparison, but their strengths are complementary.
-Our hybrid approach of refining the search space early with numerical methods before making calls to dReal aims to be more powerful than either technique alone.
-However, dReal does have similar baked-in optimizations itself, and is not purely an SMT tool.
-Our current approach places the SMT-based dReal at the end of the pipeline,
-yet we could reverse this by using the SMT-based branch-and-bound algorithm to find and isolate guaranteed feasible regions before the final minimum.
-The SMT solver is excellent at handling complex constraints, as seen in the Positive Islands problem.
-Once it identifies a small box that is provably feasible, it could hand that box off to a fast numerical optimizer
-like SHGO or Differential Evolution to quickly find the local minimum within that feasible region.
+// Ordering Hybrid SMT and Numerical Methods.
+// We treat the SMT and numerical methods as separate categories for comparison, but their strengths are complementary.
+// Our hybrid approach of refining the search space early with numerical methods before making calls to dReal aims to be more powerful than either technique alone.
+// However, dReal does have similar baked-in optimizations itself, and is not purely an SMT tool.
+// Our current approach places the SMT-based dReal at the end of the pipeline,
+// yet we could reverse this by using the SMT-based branch-and-bound algorithm to find and isolate guaranteed feasible regions before the final minimum.
+// The SMT solver is excellent at handling complex constraints, as seen in the Positive Islands problem.
+// Once it identifies a small box that is provably feasible, it could hand that box off to a fast numerical optimizer
+// like SHGO or Differential Evolution to quickly find the local minimum within that feasible region.
 
 
