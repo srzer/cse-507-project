@@ -50,23 +50,29 @@ which would explain why our method is comparatively slower on this specific prob
 
 === Aggregate Runtime Performance
 
-Overall, our method
 #figure(
   image("../renders/aggregate_normalized_runtime.svg", width: 110%),
-  caption: [Plot of aggregate runtime performance across testing suite.],
+  caption: [Aggregate runtime performance across testing suite.
+    Splitting on longest box side yielded a faster median than baseline.],
 ) <fig:aggregate_runtime>
+
+We now consider the aggregate of runtimes across the testing suite.
+Our method outperformed the dReal baseline in speed, but generally found smaller lower bounds.
 
 #figure(
   image("../renders/full_aggregate_normalized_runtime.svg", width: 110%),
-  caption: [Plot of aggregate runtime performance across testing suite with standard numeric optimization methods.],
+  caption: [Plot of aggregate runtime performance across testing suite with standard numeric optimization methods.
+    Note that the order methods differs from @fig:aggregate_runtime.
+    All numerical methods have a faster median runtime.],
 ) <fig:aggregate_runtime_numeric>
 
+However, runtime cannot be considered in isolation of the actual derived bound.
+We see that all surveyed methods tend to find a smaller mininum than the dReal baseline, which happens to be incorrect for some of the problems.
 
 #figure(
   image("../renders/full_aggregate_bound_difference.svg", width: 110%),
-  caption: [Plot of aggregate bound difference across testing suite.
-    Note that the gradient-split and affine-bound heursitic combination has been ommitted as it tended to produce much larger (and incorrect) bounds on many problems.
-    Dual annealing has been ommitted for a similar reason.],
+  caption: [Normalized aggregate bound difference across testing suite.
+  ],
 ) <fig:aggregate_bound_numeric>
 
 
@@ -75,11 +81,11 @@ Overall, our method
 == Design & Implementation Challenges
 
 We discovered that the affine bounding heuristic can perform rapid minimization, but the heuristic alone is insufficient to uncover the actual minimum.
-We consider the following problem.
+We consider the following Split Islands problem.
+The algorithms with the affine interval bounding heuristic terminate quickly, but with the incorrect lower bound.
 #figure(
   image("../renders/full_comparison_Split_Islands.svg", width: 110%),
-  caption: [Plot of runtime performance for Split Islands. The algorithms with the affine interval bounding heuristic terminate quickly,
-    but with the incorrect lower bound.],
+  caption: [Runtime for Split Islands.],
 ) <fig:problem_runtime_split_islands>
 
 
